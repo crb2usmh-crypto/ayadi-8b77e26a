@@ -1,11 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Search } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Search, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { TaskCard } from "@/components/common/TaskCard";
 import { PageTransition } from "@/components/layout/PageTransition";
-import { mockTasks, categoryKeys, type CategoryKey } from "@/lib/mockData";
+import { tasksQueryOptions, filterTasks } from "@/lib/supabase/queries";
+import { CATEGORY_KEYS, type TaskCategory } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/tasks/")({
@@ -15,24 +17,20 @@ export const Route = createFileRoute("/tasks/")({
       { name: "description", content: "تصفح أحدث المهام المتاحة في منصة أيادي." },
     ],
   }),
+  loader: ({ context: { queryClient } }) => {
+    queryClient.ensureQueryData(tasksQueryOptions());
+  },
   component: TasksList,
 });
 
 function TasksList() {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState<CategoryKey | "all">("all");
+  const [activeCategory, setActiveCategory] = useState<TaskCategory | "all">("all");
   const [sortBy, setSortBy] = useState<"recent" | "budget">("recent");
+  const { data: tasks = [], isLoading, error } = useQuery(tasksQueryOptions());
 
-  let filtered = mockTasks.filter((task) => {
-    const inCat = activeCategory === "all" || task.category === activeCategory;
-    const inQ =
-      !query ||
-      task.title.toLowerCase().includes(query.toLowerCase()) ||
-      task.titleEn.toLowerCase().includes(query.toLowerCase());
-    return inCat && inQ;
-  });
-
+  let filtered = filterTasks(tasks, query, activeCategory);
   if (sortBy === "budget") {
     filtered = [...filtered].sort((a, b) => b.budget - a.budget);
   }
@@ -60,7 +58,7 @@ function TasksList() {
             <Chip active={activeCategory === "all"} onClick={() => setActiveCategory("all")}>
               {t("categories.all")}
             </Chip>
-            {categoryKeys.map((c) => (
+            {CATEGORY_KEYS.map((c) => (
               <Chip key={c} active={activeCategory === c} onClick={() => setActiveCategory(c)}>
                 {t(`categories.${c}`)}
               </Chip>
@@ -77,7 +75,16 @@ function TasksList() {
           </div>
         </div>
 
-        {filtered.length === 0 ? (
+        {error ? (
+          <div className="glass-card rounded-3xl py-16 text-center text-destructive">
+            {error.message}
+          </div>
+        ) : isLoading ? (
+          <div className="glass-card flex items-center justify-center gap-2 rounded-3xl py-16 text-muted-foreground">
+            <Loader2 className="size-5 animate-spin" />
+            {t("common.loading")}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="glass-card rounded-3xl py-16 text-center text-muted-foreground">
             {t("common.noResults")}
           </div>

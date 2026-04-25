@@ -1,13 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Search, Sparkles, ArrowRight } from "lucide-react";
+import { Search, Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { TaskCard } from "@/components/common/TaskCard";
 import { PageTransition } from "@/components/layout/PageTransition";
-import { mockTasks, categoryKeys, type CategoryKey } from "@/lib/mockData";
+import { tasksQueryOptions, filterTasks } from "@/lib/supabase/queries";
+import { CATEGORY_KEYS, type TaskCategory } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -20,24 +22,20 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
+  loader: ({ context: { queryClient } }) => {
+    queryClient.ensureQueryData(tasksQueryOptions());
+  },
   component: HomePage,
 });
 
 function HomePage() {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState<CategoryKey | "all">("all");
+  const [activeCategory, setActiveCategory] = useState<TaskCategory | "all">("all");
+  const { data: tasks = [], isLoading, error } = useQuery(tasksQueryOptions());
 
-  const filtered = mockTasks.filter((task) => {
-    const inCategory = activeCategory === "all" || task.category === activeCategory;
-    const inQuery =
-      !query ||
-      task.title.toLowerCase().includes(query.toLowerCase()) ||
-      task.titleEn.toLowerCase().includes(query.toLowerCase());
-    return inCategory && inQuery;
-  });
-
-  const featured = mockTasks.filter((t) => t.featured);
+  const filtered = filterTasks(tasks, query, activeCategory);
+  const featured = tasks.filter((task) => task.featured);
 
   return (
     <PageTransition>
@@ -98,7 +96,7 @@ function HomePage() {
               label={t("categories.all")}
               onClick={() => setActiveCategory("all")}
             />
-            {categoryKeys.map((cat) => (
+            {CATEGORY_KEYS.map((cat) => (
               <CategoryChip
                 key={cat}
                 active={activeCategory === cat}
@@ -110,7 +108,7 @@ function HomePage() {
         </section>
 
         {/* Featured */}
-        {activeCategory === "all" && !query && (
+        {activeCategory === "all" && !query && featured.length > 0 && (
           <section className="mt-12">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-xl font-bold">{t("home.featured")}</h2>
@@ -129,7 +127,16 @@ function HomePage() {
           <h2 className="mb-4 text-xl font-bold">
             {query || activeCategory !== "all" ? t("nav.tasks") : t("home.latest")}
           </h2>
-          {filtered.length === 0 ? (
+          {error ? (
+            <div className="glass-card rounded-3xl py-16 text-center text-destructive">
+              {error.message}
+            </div>
+          ) : isLoading ? (
+            <div className="glass-card flex items-center justify-center gap-2 rounded-3xl py-16 text-muted-foreground">
+              <Loader2 className="size-5 animate-spin" />
+              {t("common.loading")}
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="glass-card rounded-3xl py-16 text-center text-muted-foreground">
               {t("common.noResults")}
             </div>

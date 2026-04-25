@@ -1,6 +1,7 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowLeft, MapPin, Clock, Users, Wallet, Star } from "lucide-react";
 import { toast } from "sonner";
@@ -19,15 +20,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { PageTransition } from "@/components/layout/PageTransition";
-import { mockTasks, getAvatarUrl, getTaskImage } from "@/lib/mockData";
+import { taskQueryOptions } from "@/lib/supabase/queries";
+import { getAvatarUrl, getTaskImage } from "@/lib/supabase/types";
 import { isRtl } from "@/lib/i18n/config";
 import { fireConfetti } from "@/lib/confetti";
 
 export const Route = createFileRoute("/tasks/$taskId")({
-  loader: ({ params }) => {
-    const task = mockTasks.find((t) => t.id === params.taskId);
+  loader: async ({ params, context: { queryClient } }) => {
+    const task = await queryClient.ensureQueryData(taskQueryOptions(params.taskId));
     if (!task) throw notFound();
-    return { task };
   },
   notFoundComponent: () => (
     <div className="flex min-h-[60vh] items-center justify-center">
@@ -39,11 +40,28 @@ export const Route = createFileRoute("/tasks/$taskId")({
       </div>
     </div>
   ),
+  errorComponent: ({ error }) => {
+    const router = useRouter();
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center text-center">
+        <div>
+          <p className="text-destructive">{error.message}</p>
+          <button
+            onClick={() => router.invalidate()}
+            className="mt-4 rounded-full gradient-brand px-4 py-2 text-sm text-white"
+          >
+            إعادة المحاولة
+          </button>
+        </div>
+      </div>
+    );
+  },
   component: TaskDetail,
 });
 
 function TaskDetail() {
-  const { task } = Route.useLoaderData();
+  const { taskId } = Route.useParams();
+  const { data: task } = useSuspenseQuery(taskQueryOptions(taskId));
   const { t, i18n } = useTranslation();
   const rtl = isRtl(i18n.language);
   const [open, setOpen] = useState(false);
@@ -51,10 +69,16 @@ function TaskDetail() {
   const heroY = useTransform(scrollY, [0, 400], [0, 80]);
   const heroScale = useTransform(scrollY, [0, 400], [1, 1.15]);
 
-  const title = rtl ? task.title : task.titleEn;
-  const description = rtl ? task.description : task.descriptionEn;
-  const location = rtl ? task.location : task.locationEn;
-  const deadline = rtl ? task.deadline : task.deadlineEn;
+  if (!task) return null; // satisfied by loader notFound, but keeps TS happy
+
+  const title = rtl ? task.title : task.title_en ?? task.title;
+  const description = rtl ? task.description : task.description_en ?? task.description;
+  const location = rtl ? task.location ?? "—" : task.location_en ?? task.location ?? "—";
+  const deadline = rtl ? task.deadline ?? "—" : task.deadline_en ?? task.deadline ?? "—";
+  const ownerName = task.owner?.display_name || task.owner?.username || "—";
+  const ownerSeed = task.owner?.avatar_seed || task.owner?.username || "anon";
+  const ownerRating = task.owner?.rating ?? 0;
+  const ownerCompleted = task.owner?.completed_tasks ?? 0;
 
   const handleSubmitOffer = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,7 +103,7 @@ function TaskDetail() {
         {/* Hero with parallax */}
         <div className="relative mt-4 h-64 overflow-hidden rounded-3xl shadow-2xl md:h-80">
           <motion.img
-            src={getTaskImage(task.imageSeed, 1600, 800)}
+            src={getTaskImage(task.image_seed, 1600, 800)}
             alt={title}
             style={{ y: heroY, scale: heroScale }}
             className="absolute inset-0 h-full w-full object-cover"
@@ -112,9 +136,11 @@ function TaskDetail() {
             <div className="glass-card flex items-center justify-between rounded-3xl p-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Users className="size-4" />
-                {task.offersCount} {t("task.offers")}
+                {task.offers_count} {t("task.offers")}
               </div>
-              <div className="text-xs text-muted-foreground">{task.postedAt}</div>
+              <div className="text-xs text-muted-foreground">
+                {new Date(task.created_at).toLocaleDateString(rtl ? "ar" : "en")}
+              </div>
             </div>
           </div>
 
@@ -123,15 +149,15 @@ function TaskDetail() {
             <div className="glass-card rounded-3xl p-6 text-center">
               <p className="text-xs uppercase text-muted-foreground">{t("task.publisher")}</p>
               <Avatar className="mx-auto mt-3 size-20 ring-4 ring-primary/20">
-                <AvatarImage src={getAvatarUrl(task.publisher.avatarSeed, 120)} />
-                <AvatarFallback>{task.publisher.name[0]}</AvatarFallback>
+                <AvatarImage src={getAvatarUrl(ownerSeed, 120)} />
+                <AvatarFallback>{ownerName[0]}</AvatarFallback>
               </Avatar>
-              <p className="mt-3 font-semibold">{task.publisher.name}</p>
+              <p className="mt-3 font-semibold">{ownerName}</p>
               <div className="mt-1 flex items-center justify-center gap-1 text-sm">
                 <Star className="size-4 fill-yellow-400 text-yellow-400" />
-                <span className="font-medium">{task.publisher.rating}</span>
+                <span className="font-medium">{Number(ownerRating).toFixed(1)}</span>
                 <span className="text-muted-foreground">
-                  · {task.publisher.completedTasks} {t("profile.completedTasks")}
+                  · {ownerCompleted} {t("profile.completedTasks")}
                 </span>
               </div>
             </div>
