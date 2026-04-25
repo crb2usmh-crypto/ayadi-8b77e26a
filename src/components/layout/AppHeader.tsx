@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { NotificationsPanel } from "./NotificationsPanel";
-import { currentUser, getAvatarUrl } from "@/lib/mockData";
+import { getAvatarUrl } from "@/lib/supabase/types";
 import { usePiAuth } from "@/components/providers/PiAuthProvider";
 
 export function AppHeader() {
@@ -22,7 +22,8 @@ export function AppHeader() {
   const { session, logout } = usePiAuth();
   const navigate = useNavigate();
 
-  const displayName = session?.user.username ?? currentUser.name;
+  const displayName = session?.user.username ?? "Guest";
+  const avatarSeed = session?.user.username ?? "anon";
   const handleLogout = () => {
     logout();
     navigate({ to: "/auth" });
@@ -71,8 +72,8 @@ export function AppHeader() {
             <DropdownMenuTrigger asChild>
               <button className="ms-1 rounded-full ring-2 ring-primary/20 transition-all hover:ring-primary/50">
                 <Avatar className="size-9">
-                  <AvatarImage src={getAvatarUrl(currentUser.avatarSeed)} alt={currentUser.name} />
-                  <AvatarFallback>YOU</AvatarFallback>
+                  <AvatarImage src={getAvatarUrl(avatarSeed)} alt={displayName} />
+                  <AvatarFallback>{displayName[0]?.toUpperCase() ?? "?"}</AvatarFallback>
                 </Avatar>
               </button>
             </DropdownMenuTrigger>
