@@ -16,6 +16,7 @@ import { I18nextProvider, useTranslation } from "react-i18next";
 import i18n from "@/lib/i18n/config";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { DirectionProvider } from "@/components/providers/DirectionProvider";
+import { PiAuthProvider } from "@/components/providers/PiAuthProvider";
 import { AppShell } from "@/components/layout/AppShell";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -101,10 +102,12 @@ function RootComponent() {
     <I18nextProvider i18n={i18n}>
       <ThemeProvider>
         <DirectionProvider>
-          <AppShell>
-            <Outlet />
-          </AppShell>
-          <Toaster position="top-center" richColors closeButton />
+          <PiAuthProvider>
+            <AppShell>
+              <Outlet />
+            </AppShell>
+            <Toaster position="top-center" richColors closeButton />
+          </PiAuthProvider>
         </DirectionProvider>
       </ThemeProvider>
     </I18nextProvider>
