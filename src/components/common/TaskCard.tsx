@@ -4,15 +4,21 @@ import { motion } from "framer-motion";
 import { MapPin, Clock, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getAvatarUrl, getTaskImage, type MockTask } from "@/lib/mockData";
+import {
+  getAvatarUrl,
+  getTaskImage,
+  type TaskWithOwner,
+} from "@/lib/supabase/types";
 import { isRtl } from "@/lib/i18n/config";
 
-export function TaskCard({ task, index = 0 }: { task: MockTask; index?: number }) {
+export function TaskCard({ task, index = 0 }: { task: TaskWithOwner; index?: number }) {
   const { t, i18n } = useTranslation();
   const rtl = isRtl(i18n.language);
-  const title = rtl ? task.title : task.titleEn;
-  const location = rtl ? task.location : task.locationEn;
-  const deadline = rtl ? task.deadline : task.deadlineEn;
+  const title = rtl ? task.title : task.title_en ?? task.title;
+  const location = rtl ? task.location ?? "" : task.location_en ?? task.location ?? "";
+  const deadline = rtl ? task.deadline ?? "" : task.deadline_en ?? task.deadline ?? "";
+  const ownerName = task.owner?.display_name || task.owner?.username || "—";
+  const ownerSeed = task.owner?.avatar_seed || task.owner?.username || "anon";
 
   return (
     <motion.div
@@ -33,7 +39,7 @@ export function TaskCard({ task, index = 0 }: { task: MockTask; index?: number }
         )}
         <div className="relative h-40 overflow-hidden">
           <img
-            src={getTaskImage(task.imageSeed, 600, 320)}
+            src={getTaskImage(task.image_seed, 600, 320)}
             alt={title}
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
@@ -50,27 +56,31 @@ export function TaskCard({ task, index = 0 }: { task: MockTask; index?: number }
           </div>
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <MapPin className="size-3" />
-              {location}
-            </span>
-            <span className="flex items-center gap-1">
-              <Clock className="size-3" />
-              {deadline}
-            </span>
+            {location && (
+              <span className="flex items-center gap-1">
+                <MapPin className="size-3" />
+                {location}
+              </span>
+            )}
+            {deadline && (
+              <span className="flex items-center gap-1">
+                <Clock className="size-3" />
+                {deadline}
+              </span>
+            )}
             <span className="flex items-center gap-1">
               <Users className="size-3" />
-              {task.offersCount} {t("task.offers")}
+              {task.offers_count} {t("task.offers")}
             </span>
           </div>
 
           <div className="flex items-center justify-between border-t border-border/50 pt-3">
             <div className="flex items-center gap-2">
               <Avatar className="size-7">
-                <AvatarImage src={getAvatarUrl(task.publisher.avatarSeed)} />
-                <AvatarFallback>{task.publisher.name[0]}</AvatarFallback>
+                <AvatarImage src={getAvatarUrl(ownerSeed)} />
+                <AvatarFallback>{ownerName[0]}</AvatarFallback>
               </Avatar>
-              <span className="text-xs font-medium">{task.publisher.name}</span>
+              <span className="text-xs font-medium">{ownerName}</span>
             </div>
             <div className="text-end">
               <p className="text-lg font-bold gradient-text leading-none">
