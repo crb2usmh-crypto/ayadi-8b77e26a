@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
-import { Bell, MessageCircle, Briefcase, Sparkles } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Bell, MessageCircle, Briefcase, Sparkles, Loader2 } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -9,11 +10,13 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { mockNotifications, type MockNotification } from "@/lib/mockData";
+import { usePiAuth } from "@/components/providers/PiAuthProvider";
+import { notificationsQueryOptions } from "@/lib/supabase/queries";
+import type { NotificationType } from "@/lib/supabase/types";
 import { isRtl } from "@/lib/i18n/config";
 import { cn } from "@/lib/utils";
 
-const ICONS: Record<MockNotification["type"], React.ElementType> = {
+const ICONS: Record<NotificationType, React.ElementType> = {
   offer: Briefcase,
   message: MessageCircle,
   task: Sparkles,
@@ -23,7 +26,11 @@ const ICONS: Record<MockNotification["type"], React.ElementType> = {
 export function NotificationsPanel() {
   const { t, i18n } = useTranslation();
   const rtl = isRtl(i18n.language);
-  const unread = mockNotifications.filter((n) => !n.read).length;
+  const { session } = usePiAuth();
+  const { data: notifications = [], isLoading, error } = useQuery(
+    notificationsQueryOptions(session?.accessToken),
+  );
+  const unread = notifications.filter((n) => !n.read).length;
 
   return (
     <Sheet>
@@ -44,10 +51,31 @@ export function NotificationsPanel() {
           </SheetTitle>
         </SheetHeader>
         <div className="mt-6 flex flex-col gap-3 overflow-y-auto pb-6">
-          {mockNotifications.map((n) => {
-            const Icon = ICONS[n.type];
-            const title = rtl ? n.title : n.titleEn;
-            const body = rtl ? n.body : n.bodyEn;
+          {!session ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              {t("auth.piRequiredMessage")}
+            </p>
+          ) : isLoading ? (
+            <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
+            </div>
+          ) : error ? (
+            <p className="py-8 text-center text-sm text-destructive">{error.message}</p>
+          ) : notifications.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              {t("notifications.empty")}
+            </p>
+          ) : (
+            notifications.map((n) => {
+              const Icon = ICONS[n.type];
+              const title = rtl ? n.title : n.title_en ?? n.title;
+              const body = rtl ? n.body : n.body_en ?? n.body;
+              const when = new Date(n.created_at).toLocaleString(rtl ? "ar" : "en", {
+                hour: "2-digit",
+                minute: "2-digit",
+                day: "2-digit",
+                month: "2-digit",
+              });
             return (
               <div
                 key={n.id}
@@ -65,11 +93,12 @@ export function NotificationsPanel() {
                     {!n.read && <Badge className="h-5 px-1.5 text-[10px]">جديد</Badge>}
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">{body}</p>
-                  <p className="mt-1 text-xs text-muted-foreground/70">{n.createdAt}</p>
+                  <p className="mt-1 text-xs text-muted-foreground/70">{when}</p>
                 </div>
               </div>
             );
-          })}
+            })
+          )}
         </div>
       </SheetContent>
     </Sheet>
