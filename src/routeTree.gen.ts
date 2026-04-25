@@ -19,6 +19,7 @@ import { Route as MessagesIndexRouteImport } from './routes/messages.index'
 import { Route as TasksTaskIdRouteImport } from './routes/tasks.$taskId'
 import { Route as MessagesConversationIdRouteImport } from './routes/messages.$conversationId'
 import { Route as ApiPublicPiVerifyRouteImport } from './routes/api.public.pi-verify'
+import { Route as ApiPublicNotificationsRouteImport } from './routes/api.public.notifications'
 
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
@@ -70,6 +71,11 @@ const ApiPublicPiVerifyRoute = ApiPublicPiVerifyRouteImport.update({
   path: '/api/public/pi-verify',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicNotificationsRoute = ApiPublicNotificationsRouteImport.update({
+  id: '/api/public/notifications',
+  path: '/api/public/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/messages/': typeof MessagesIndexRoute
   '/tasks/': typeof TasksIndexRoute
+  '/api/public/notifications': typeof ApiPublicNotificationsRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
 }
 export interface FileRoutesByTo {
@@ -92,6 +99,7 @@ export interface FileRoutesByTo {
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/messages': typeof MessagesIndexRoute
   '/tasks': typeof TasksIndexRoute
+  '/api/public/notifications': typeof ApiPublicNotificationsRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
 }
 export interface FileRoutesById {
@@ -105,6 +113,7 @@ export interface FileRoutesById {
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/messages/': typeof MessagesIndexRoute
   '/tasks/': typeof TasksIndexRoute
+  '/api/public/notifications': typeof ApiPublicNotificationsRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
 }
 export interface FileRouteTypes {
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
     | '/tasks/$taskId'
     | '/messages/'
     | '/tasks/'
+    | '/api/public/notifications'
     | '/api/public/pi-verify'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -130,6 +140,7 @@ export interface FileRouteTypes {
     | '/tasks/$taskId'
     | '/messages'
     | '/tasks'
+    | '/api/public/notifications'
     | '/api/public/pi-verify'
   id:
     | '__root__'
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/tasks/$taskId'
     | '/messages/'
     | '/tasks/'
+    | '/api/public/notifications'
     | '/api/public/pi-verify'
   fileRoutesById: FileRoutesById
 }
@@ -153,6 +165,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   TasksTaskIdRoute: typeof TasksTaskIdRoute
   TasksIndexRoute: typeof TasksIndexRoute
+  ApiPublicNotificationsRoute: typeof ApiPublicNotificationsRoute
   ApiPublicPiVerifyRoute: typeof ApiPublicPiVerifyRoute
 }
 
@@ -228,6 +241,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPiVerifyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/notifications': {
+      id: '/api/public/notifications'
+      path: '/api/public/notifications'
+      fullPath: '/api/public/notifications'
+      preLoaderRoute: typeof ApiPublicNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -253,6 +273,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   TasksTaskIdRoute: TasksTaskIdRoute,
   TasksIndexRoute: TasksIndexRoute,
+  ApiPublicNotificationsRoute: ApiPublicNotificationsRoute,
   ApiPublicPiVerifyRoute: ApiPublicPiVerifyRoute,
 }
 export const routeTree = rootRouteImport
