@@ -12,11 +12,16 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PostTaskRouteImport } from './routes/post-task'
 import { Route as MessagesRouteImport } from './routes/messages'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TasksIndexRouteImport } from './routes/tasks.index'
 import { Route as MessagesIndexRouteImport } from './routes/messages.index'
 import { Route as TasksTaskIdRouteImport } from './routes/tasks.$taskId'
 import { Route as MessagesConversationIdRouteImport } from './routes/messages.$conversationId'
+import { Route as AuthSignupRouteImport } from './routes/auth.signup'
+import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
+import { Route as AuthLoginRouteImport } from './routes/auth.login'
+import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
 
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
@@ -31,6 +36,11 @@ const PostTaskRoute = PostTaskRouteImport.update({
 const MessagesRoute = MessagesRouteImport.update({
   id: '/messages',
   path: '/messages',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -58,12 +68,37 @@ const MessagesConversationIdRoute = MessagesConversationIdRouteImport.update({
   path: '/$conversationId',
   getParentRoute: () => MessagesRoute,
 } as any)
+const AuthSignupRoute = AuthSignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthLoginRoute = AuthLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => AuthRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRouteWithChildren
   '/messages': typeof MessagesRouteWithChildren
   '/post-task': typeof PostTaskRoute
   '/profile': typeof ProfileRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth/signup': typeof AuthSignupRoute
   '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/messages/': typeof MessagesIndexRoute
@@ -71,8 +106,13 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRouteWithChildren
   '/post-task': typeof PostTaskRoute
   '/profile': typeof ProfileRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth/signup': typeof AuthSignupRoute
   '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/messages': typeof MessagesIndexRoute
@@ -81,9 +121,14 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRouteWithChildren
   '/messages': typeof MessagesRouteWithChildren
   '/post-task': typeof PostTaskRoute
   '/profile': typeof ProfileRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth/signup': typeof AuthSignupRoute
   '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/messages/': typeof MessagesIndexRoute
@@ -93,9 +138,14 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth'
     | '/messages'
     | '/post-task'
     | '/profile'
+    | '/auth/forgot-password'
+    | '/auth/login'
+    | '/auth/reset-password'
+    | '/auth/signup'
     | '/messages/$conversationId'
     | '/tasks/$taskId'
     | '/messages/'
@@ -103,8 +153,13 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auth'
     | '/post-task'
     | '/profile'
+    | '/auth/forgot-password'
+    | '/auth/login'
+    | '/auth/reset-password'
+    | '/auth/signup'
     | '/messages/$conversationId'
     | '/tasks/$taskId'
     | '/messages'
@@ -112,9 +167,14 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/auth'
     | '/messages'
     | '/post-task'
     | '/profile'
+    | '/auth/forgot-password'
+    | '/auth/login'
+    | '/auth/reset-password'
+    | '/auth/signup'
     | '/messages/$conversationId'
     | '/tasks/$taskId'
     | '/messages/'
@@ -123,6 +183,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRouteWithChildren
   MessagesRoute: typeof MessagesRouteWithChildren
   PostTaskRoute: typeof PostTaskRoute
   ProfileRoute: typeof ProfileRoute
@@ -151,6 +212,13 @@ declare module '@tanstack/react-router' {
       path: '/messages'
       fullPath: '/messages'
       preLoaderRoute: typeof MessagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -188,8 +256,52 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MessagesConversationIdRouteImport
       parentRoute: typeof MessagesRoute
     }
+    '/auth/signup': {
+      id: '/auth/signup'
+      path: '/signup'
+      fullPath: '/auth/signup'
+      preLoaderRoute: typeof AuthSignupRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/reset-password': {
+      id: '/auth/reset-password'
+      path: '/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/login': {
+      id: '/auth/login'
+      path: '/login'
+      fullPath: '/auth/login'
+      preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/forgot-password': {
+      id: '/auth/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/auth/forgot-password'
+      preLoaderRoute: typeof AuthForgotPasswordRouteImport
+      parentRoute: typeof AuthRoute
+    }
   }
 }
+
+interface AuthRouteChildren {
+  AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
+  AuthLoginRoute: typeof AuthLoginRoute
+  AuthResetPasswordRoute: typeof AuthResetPasswordRoute
+  AuthSignupRoute: typeof AuthSignupRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthForgotPasswordRoute: AuthForgotPasswordRoute,
+  AuthLoginRoute: AuthLoginRoute,
+  AuthResetPasswordRoute: AuthResetPasswordRoute,
+  AuthSignupRoute: AuthSignupRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 interface MessagesRouteChildren {
   MessagesConversationIdRoute: typeof MessagesConversationIdRoute
@@ -207,6 +319,7 @@ const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRouteWithChildren,
   MessagesRoute: MessagesRouteWithChildren,
   PostTaskRoute: PostTaskRoute,
   ProfileRoute: ProfileRoute,
@@ -216,3 +329,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
