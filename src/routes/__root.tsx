@@ -1,4 +1,11 @@
-import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import {
+  Outlet,
+  Link,
+  createRootRouteWithContext,
+  HeadContent,
+  Scripts,
+} from "@tanstack/react-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import appCss from "../styles.css?url";
 import "@fontsource/outfit/400.css";
@@ -45,7 +52,11 @@ function NotFoundComponent() {
   );
 }
 
-export const Route = createRootRoute({
+interface RouterContext {
+  queryClient: QueryClient;
+}
+
+export const Route = createRootRouteWithContext<RouterContext>()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -98,16 +109,19 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  const { queryClient } = Route.useRouteContext();
   return (
     <I18nextProvider i18n={i18n}>
       <ThemeProvider>
         <DirectionProvider>
-          <PiAuthProvider>
-            <AppShell>
-              <Outlet />
-            </AppShell>
-            <Toaster position="top-center" richColors closeButton />
-          </PiAuthProvider>
+          <QueryClientProvider client={queryClient}>
+            <PiAuthProvider>
+              <AppShell>
+                <Outlet />
+              </AppShell>
+              <Toaster position="top-center" richColors closeButton />
+            </PiAuthProvider>
+          </QueryClientProvider>
         </DirectionProvider>
       </ThemeProvider>
     </I18nextProvider>
