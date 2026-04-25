@@ -1,11 +1,12 @@
-import { useLocation } from "@tanstack/react-router";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { AnimatePresence } from "framer-motion";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { AppHeader } from "./AppHeader";
 import { FloatingSidebar } from "./FloatingSidebar";
 import { BottomNavigation } from "./BottomNavigation";
 import { GradientOrbs } from "./GradientOrbs";
 import { cn } from "@/lib/utils";
+import { usePiAuth } from "@/components/providers/PiAuthProvider";
 
 function getPageBgClass(pathname: string) {
   if (pathname.startsWith("/tasks")) return "bg-gradient-page-tasks";
@@ -18,8 +19,19 @@ function getPageBgClass(pathname: string) {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { session } = usePiAuth();
   const isAuth = location.pathname.startsWith("/auth");
   const bgClass = getPageBgClass(location.pathname);
+
+  // Gate the entire app behind Pi authentication.
+  useEffect(() => {
+    if (!session && !isAuth) {
+      navigate({ to: "/auth", replace: true });
+    }
+  }, [session, isAuth, navigate]);
+
+  if (!session && !isAuth) return null;
 
   return (
     <div className={cn("relative min-h-screen", bgClass)}>
