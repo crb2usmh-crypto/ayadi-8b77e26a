@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Globe, Moon, Sun, Hand, LogOut, User as UserIcon, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,10 +14,19 @@ import {
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { NotificationsPanel } from "./NotificationsPanel";
 import { currentUser, getAvatarUrl } from "@/lib/mockData";
+import { usePiAuth } from "@/components/providers/PiAuthProvider";
 
 export function AppHeader() {
   const { t, i18n } = useTranslation();
   const { theme, toggleTheme } = useTheme();
+  const { session, logout } = usePiAuth();
+  const navigate = useNavigate();
+
+  const displayName = session?.user.username ?? currentUser.name;
+  const handleLogout = () => {
+    logout();
+    navigate({ to: "/auth" });
+  };
 
   const toggleLang = () => {
     const next = i18n.language === "ar" ? "en" : "ar";
@@ -68,7 +77,9 @@ export function AppHeader() {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52 glass-card">
-              <DropdownMenuLabel>{currentUser.name}</DropdownMenuLabel>
+              <DropdownMenuLabel>
+                {session ? `@${session.user.username}` : displayName}
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link to="/profile" className="cursor-pointer">
@@ -81,11 +92,9 @@ export function AppHeader() {
                 {t("common.settings")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/auth/login" className="cursor-pointer">
-                  <LogOut className="size-4" />
-                  {t("common.logout")}
-                </Link>
+              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                <LogOut className="size-4" />
+                {t("common.logout")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
