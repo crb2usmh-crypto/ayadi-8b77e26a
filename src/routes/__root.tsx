@@ -68,14 +68,19 @@ export const Route = createRootRouteWithContext<RouterContext>()({
           "منصة أيادي تربط أصحاب المهام بالمستقلين في سوق عمل لامركزي عصري وآمن.",
       },
       { name: "author", content: "Ayadi" },
-      { property: "og:title", content: "أيادي — Ayadi Marketplace" },
+      { property: "og:title", content: "أيادي — سوق العمل اللامركزي" },
       {
         property: "og:description",
         content: "اعثر على من ينجز المهمة، أو كن أنت من ينجزها.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "أيادي — Ayadi" },
+      { name: "twitter:title", content: "أيادي — سوق العمل اللامركزي" },
+      { name: "description", content: "Ayadi أيادي is a decentralized mini-job marketplace app." },
+      { property: "og:description", content: "Ayadi أيادي is a decentralized mini-job marketplace app." },
+      { name: "twitter:description", content: "Ayadi أيادي is a decentralized mini-job marketplace app." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/dq87gVW9Y5b6oIarEJ2kBivYq6o1/social-images/social-1777117539136-file_000000004e00722fad4e3ac41a93c7e1.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/dq87gVW9Y5b6oIarEJ2kBivYq6o1/social-images/social-1777117539136-file_000000004e00722fad4e3ac41a93c7e1.webp" },
     ],
     links: [
       {
