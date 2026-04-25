@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, ArrowRight, ArrowLeft } from "lucide-react";
+import { Check, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,7 +16,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageTransition } from "@/components/layout/PageTransition";
-import { categoryKeys } from "@/lib/mockData";
+import { usePiAuth } from "@/components/providers/PiAuthProvider";
+import { CATEGORY_KEYS } from "@/lib/supabase/types";
 import { fireConfetti } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
 
@@ -32,7 +34,10 @@ export const Route = createFileRoute("/post-task")({
 function PostTask() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { session } = usePiAuth();
   const [step, setStep] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     title: "",
     category: "design",
@@ -48,10 +53,44 @@ function PostTask() {
   const next = () => setStep((s) => Math.min(totalSteps, s + 1));
   const back = () => setStep((s) => Math.max(1, s - 1));
 
-  const submit = () => {
-    fireConfetti();
-    toast.success(t("post.published"));
-    setTimeout(() => navigate({ to: "/" }), 800);
+  const submit = async () => {
+    if (!session) {
+      toast.error(t("auth.piRequiredMessage"));
+      navigate({ to: "/auth" });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/public/tasks-create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accessToken: session.accessToken,
+          task: {
+            title: form.title,
+            description: form.description,
+            category: form.category,
+            budget: Number(form.budget) || 0,
+            location: form.location,
+            deadline: form.deadline,
+          },
+        }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error || `Failed (${res.status})`);
+      }
+      // Refresh listings so the new task appears immediately.
+      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      fireConfetti();
+      toast.success(t("post.published"));
+      setTimeout(() => navigate({ to: "/" }), 800);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error";
+      toast.error(message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -123,7 +162,7 @@ function PostTask() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {categoryKeys.map((c) => (
+                    {CATEGORY_KEYS.map((c) => (
                           <SelectItem key={c} value={c}>
                             {t(`categories.${c}`)}
                           </SelectItem>
@@ -200,7 +239,13 @@ function PostTask() {
                 <ArrowRight className="size-4 rtl:rotate-180" />
               </Button>
             ) : (
-              <Button onClick={submit} size="lg" className="rounded-full gradient-brand text-white shadow-lg shadow-primary/40">
+              <Button
+                onClick={submit}
+                disabled={submitting}
+                size="lg"
+                className="rounded-full gradient-brand text-white shadow-lg shadow-primary/40"
+              >
+                {submitting && <Loader2 className="me-2 size-4 animate-spin" />}
                 {t("post.publishTask")}
               </Button>
             )}
