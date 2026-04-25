@@ -11,9 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PostTaskRouteImport } from './routes/post-task'
+import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TasksIndexRouteImport } from './routes/tasks.index'
+import { Route as MessagesIndexRouteImport } from './routes/messages.index'
 import { Route as TasksTaskIdRouteImport } from './routes/tasks.$taskId'
+import { Route as MessagesConversationIdRouteImport } from './routes/messages.$conversationId'
 
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
@@ -23,6 +26,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const PostTaskRoute = PostTaskRouteImport.update({
   id: '/post-task',
   path: '/post-task',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesRoute = MessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -35,50 +43,87 @@ const TasksIndexRoute = TasksIndexRouteImport.update({
   path: '/tasks/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MessagesIndexRoute = MessagesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MessagesRoute,
+} as any)
 const TasksTaskIdRoute = TasksTaskIdRouteImport.update({
   id: '/tasks/$taskId',
   path: '/tasks/$taskId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MessagesConversationIdRoute = MessagesConversationIdRouteImport.update({
+  id: '/$conversationId',
+  path: '/$conversationId',
+  getParentRoute: () => MessagesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/post-task': typeof PostTaskRoute
   '/profile': typeof ProfileRoute
+  '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
+  '/messages/': typeof MessagesIndexRoute
   '/tasks/': typeof TasksIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/post-task': typeof PostTaskRoute
   '/profile': typeof ProfileRoute
+  '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
+  '/messages': typeof MessagesIndexRoute
   '/tasks': typeof TasksIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/post-task': typeof PostTaskRoute
   '/profile': typeof ProfileRoute
+  '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
+  '/messages/': typeof MessagesIndexRoute
   '/tasks/': typeof TasksIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/post-task' | '/profile' | '/tasks/$taskId' | '/tasks/'
+  fullPaths:
+    | '/'
+    | '/messages'
+    | '/post-task'
+    | '/profile'
+    | '/messages/$conversationId'
+    | '/tasks/$taskId'
+    | '/messages/'
+    | '/tasks/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/post-task' | '/profile' | '/tasks/$taskId' | '/tasks'
-  id:
-    | '__root__'
+  to:
     | '/'
     | '/post-task'
     | '/profile'
+    | '/messages/$conversationId'
     | '/tasks/$taskId'
+    | '/messages'
+    | '/tasks'
+  id:
+    | '__root__'
+    | '/'
+    | '/messages'
+    | '/post-task'
+    | '/profile'
+    | '/messages/$conversationId'
+    | '/tasks/$taskId'
+    | '/messages/'
     | '/tasks/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  MessagesRoute: typeof MessagesRouteWithChildren
   PostTaskRoute: typeof PostTaskRoute
   ProfileRoute: typeof ProfileRoute
   TasksTaskIdRoute: typeof TasksTaskIdRoute
@@ -101,6 +146,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PostTaskRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/messages': {
+      id: '/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -115,6 +167,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TasksIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/messages/': {
+      id: '/messages/'
+      path: '/'
+      fullPath: '/messages/'
+      preLoaderRoute: typeof MessagesIndexRouteImport
+      parentRoute: typeof MessagesRoute
+    }
     '/tasks/$taskId': {
       id: '/tasks/$taskId'
       path: '/tasks/$taskId'
@@ -122,11 +181,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TasksTaskIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/messages/$conversationId': {
+      id: '/messages/$conversationId'
+      path: '/$conversationId'
+      fullPath: '/messages/$conversationId'
+      preLoaderRoute: typeof MessagesConversationIdRouteImport
+      parentRoute: typeof MessagesRoute
+    }
   }
 }
 
+interface MessagesRouteChildren {
+  MessagesConversationIdRoute: typeof MessagesConversationIdRoute
+  MessagesIndexRoute: typeof MessagesIndexRoute
+}
+
+const MessagesRouteChildren: MessagesRouteChildren = {
+  MessagesConversationIdRoute: MessagesConversationIdRoute,
+  MessagesIndexRoute: MessagesIndexRoute,
+}
+
+const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
+  MessagesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  MessagesRoute: MessagesRouteWithChildren,
   PostTaskRoute: PostTaskRoute,
   ProfileRoute: ProfileRoute,
   TasksTaskIdRoute: TasksTaskIdRoute,

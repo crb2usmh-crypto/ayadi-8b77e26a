@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { mockConversations, mockMessages, getAvatarUrl } from "@/lib/mockData";
+import type { MockMessage } from "@/lib/mockData";
 import { isRtl } from "@/lib/i18n/config";
 import { cn } from "@/lib/utils";
 
@@ -32,12 +33,12 @@ function ChatRoom() {
   const { t, i18n } = useTranslation();
   const rtl = isRtl(i18n.language);
   const [input, setInput] = useState("");
-  const [localMessages, setLocalMessages] = useState(messages);
+  const [localMessages, setLocalMessages] = useState<MockMessage[]>(messages);
 
   const send = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
-    setLocalMessages((prev) => [
+    setLocalMessages((prev: MockMessage[]) => [
       ...prev,
       {
         id: `local-${Date.now()}`,
@@ -70,7 +71,7 @@ function ChatRoom() {
 
       {/* Messages */}
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
-        {localMessages.map((m) => {
+        {localMessages.map((m: MockMessage) => {
           const isMe = m.senderId === "me";
           const text = rtl ? m.text : m.textEn;
           return (
