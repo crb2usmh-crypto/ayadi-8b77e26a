@@ -18,10 +18,7 @@ import { Route as TasksIndexRouteImport } from './routes/tasks.index'
 import { Route as MessagesIndexRouteImport } from './routes/messages.index'
 import { Route as TasksTaskIdRouteImport } from './routes/tasks.$taskId'
 import { Route as MessagesConversationIdRouteImport } from './routes/messages.$conversationId'
-import { Route as AuthSignupRouteImport } from './routes/auth.signup'
-import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
-import { Route as AuthLoginRouteImport } from './routes/auth.login'
-import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
+import { Route as ApiPublicPiVerifyRouteImport } from './routes/api.public.pi-verify'
 
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
@@ -68,71 +65,47 @@ const MessagesConversationIdRoute = MessagesConversationIdRouteImport.update({
   path: '/$conversationId',
   getParentRoute: () => MessagesRoute,
 } as any)
-const AuthSignupRoute = AuthSignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthLoginRoute = AuthLoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
-  getParentRoute: () => AuthRoute,
+const ApiPublicPiVerifyRoute = ApiPublicPiVerifyRouteImport.update({
+  id: '/api/public/pi-verify',
+  path: '/api/public/pi-verify',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRouteWithChildren
+  '/auth': typeof AuthRoute
   '/messages': typeof MessagesRouteWithChildren
   '/post-task': typeof PostTaskRoute
   '/profile': typeof ProfileRoute
-  '/auth/forgot-password': typeof AuthForgotPasswordRoute
-  '/auth/login': typeof AuthLoginRoute
-  '/auth/reset-password': typeof AuthResetPasswordRoute
-  '/auth/signup': typeof AuthSignupRoute
   '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/messages/': typeof MessagesIndexRoute
   '/tasks/': typeof TasksIndexRoute
+  '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRouteWithChildren
+  '/auth': typeof AuthRoute
   '/post-task': typeof PostTaskRoute
   '/profile': typeof ProfileRoute
-  '/auth/forgot-password': typeof AuthForgotPasswordRoute
-  '/auth/login': typeof AuthLoginRoute
-  '/auth/reset-password': typeof AuthResetPasswordRoute
-  '/auth/signup': typeof AuthSignupRoute
   '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/messages': typeof MessagesIndexRoute
   '/tasks': typeof TasksIndexRoute
+  '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/auth': typeof AuthRouteWithChildren
+  '/auth': typeof AuthRoute
   '/messages': typeof MessagesRouteWithChildren
   '/post-task': typeof PostTaskRoute
   '/profile': typeof ProfileRoute
-  '/auth/forgot-password': typeof AuthForgotPasswordRoute
-  '/auth/login': typeof AuthLoginRoute
-  '/auth/reset-password': typeof AuthResetPasswordRoute
-  '/auth/signup': typeof AuthSignupRoute
   '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/messages/': typeof MessagesIndexRoute
   '/tasks/': typeof TasksIndexRoute
+  '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -142,28 +115,22 @@ export interface FileRouteTypes {
     | '/messages'
     | '/post-task'
     | '/profile'
-    | '/auth/forgot-password'
-    | '/auth/login'
-    | '/auth/reset-password'
-    | '/auth/signup'
     | '/messages/$conversationId'
     | '/tasks/$taskId'
     | '/messages/'
     | '/tasks/'
+    | '/api/public/pi-verify'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/post-task'
     | '/profile'
-    | '/auth/forgot-password'
-    | '/auth/login'
-    | '/auth/reset-password'
-    | '/auth/signup'
     | '/messages/$conversationId'
     | '/tasks/$taskId'
     | '/messages'
     | '/tasks'
+    | '/api/public/pi-verify'
   id:
     | '__root__'
     | '/'
@@ -171,24 +138,22 @@ export interface FileRouteTypes {
     | '/messages'
     | '/post-task'
     | '/profile'
-    | '/auth/forgot-password'
-    | '/auth/login'
-    | '/auth/reset-password'
-    | '/auth/signup'
     | '/messages/$conversationId'
     | '/tasks/$taskId'
     | '/messages/'
     | '/tasks/'
+    | '/api/public/pi-verify'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthRoute: typeof AuthRouteWithChildren
+  AuthRoute: typeof AuthRoute
   MessagesRoute: typeof MessagesRouteWithChildren
   PostTaskRoute: typeof PostTaskRoute
   ProfileRoute: typeof ProfileRoute
   TasksTaskIdRoute: typeof TasksTaskIdRoute
   TasksIndexRoute: typeof TasksIndexRoute
+  ApiPublicPiVerifyRoute: typeof ApiPublicPiVerifyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -256,52 +221,15 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MessagesConversationIdRouteImport
       parentRoute: typeof MessagesRoute
     }
-    '/auth/signup': {
-      id: '/auth/signup'
-      path: '/signup'
-      fullPath: '/auth/signup'
-      preLoaderRoute: typeof AuthSignupRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/auth/reset-password': {
-      id: '/auth/reset-password'
-      path: '/reset-password'
-      fullPath: '/auth/reset-password'
-      preLoaderRoute: typeof AuthResetPasswordRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/auth/login': {
-      id: '/auth/login'
-      path: '/login'
-      fullPath: '/auth/login'
-      preLoaderRoute: typeof AuthLoginRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/auth/forgot-password': {
-      id: '/auth/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/auth/forgot-password'
-      preLoaderRoute: typeof AuthForgotPasswordRouteImport
-      parentRoute: typeof AuthRoute
+    '/api/public/pi-verify': {
+      id: '/api/public/pi-verify'
+      path: '/api/public/pi-verify'
+      fullPath: '/api/public/pi-verify'
+      preLoaderRoute: typeof ApiPublicPiVerifyRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
-
-interface AuthRouteChildren {
-  AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
-  AuthLoginRoute: typeof AuthLoginRoute
-  AuthResetPasswordRoute: typeof AuthResetPasswordRoute
-  AuthSignupRoute: typeof AuthSignupRoute
-}
-
-const AuthRouteChildren: AuthRouteChildren = {
-  AuthForgotPasswordRoute: AuthForgotPasswordRoute,
-  AuthLoginRoute: AuthLoginRoute,
-  AuthResetPasswordRoute: AuthResetPasswordRoute,
-  AuthSignupRoute: AuthSignupRoute,
-}
-
-const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 interface MessagesRouteChildren {
   MessagesConversationIdRoute: typeof MessagesConversationIdRoute
@@ -319,12 +247,13 @@ const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthRoute: AuthRouteWithChildren,
+  AuthRoute: AuthRoute,
   MessagesRoute: MessagesRouteWithChildren,
   PostTaskRoute: PostTaskRoute,
   ProfileRoute: ProfileRoute,
   TasksTaskIdRoute: TasksTaskIdRoute,
   TasksIndexRoute: TasksIndexRoute,
+  ApiPublicPiVerifyRoute: ApiPublicPiVerifyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
