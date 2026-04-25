@@ -18,6 +18,7 @@ import { Route as TasksIndexRouteImport } from './routes/tasks.index'
 import { Route as MessagesIndexRouteImport } from './routes/messages.index'
 import { Route as TasksTaskIdRouteImport } from './routes/tasks.$taskId'
 import { Route as MessagesConversationIdRouteImport } from './routes/messages.$conversationId'
+import { Route as ApiPublicTasksCreateRouteImport } from './routes/api.public.tasks-create'
 import { Route as ApiPublicPiVerifyRouteImport } from './routes/api.public.pi-verify'
 import { Route as ApiPublicNotificationsRouteImport } from './routes/api.public.notifications'
 
@@ -66,6 +67,11 @@ const MessagesConversationIdRoute = MessagesConversationIdRouteImport.update({
   path: '/$conversationId',
   getParentRoute: () => MessagesRoute,
 } as any)
+const ApiPublicTasksCreateRoute = ApiPublicTasksCreateRouteImport.update({
+  id: '/api/public/tasks-create',
+  path: '/api/public/tasks-create',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPiVerifyRoute = ApiPublicPiVerifyRouteImport.update({
   id: '/api/public/pi-verify',
   path: '/api/public/pi-verify',
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/tasks/': typeof TasksIndexRoute
   '/api/public/notifications': typeof ApiPublicNotificationsRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
+  '/api/public/tasks-create': typeof ApiPublicTasksCreateRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/tasks': typeof TasksIndexRoute
   '/api/public/notifications': typeof ApiPublicNotificationsRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
+  '/api/public/tasks-create': typeof ApiPublicTasksCreateRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -115,6 +123,7 @@ export interface FileRoutesById {
   '/tasks/': typeof TasksIndexRoute
   '/api/public/notifications': typeof ApiPublicNotificationsRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
+  '/api/public/tasks-create': typeof ApiPublicTasksCreateRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -130,6 +139,7 @@ export interface FileRouteTypes {
     | '/tasks/'
     | '/api/public/notifications'
     | '/api/public/pi-verify'
+    | '/api/public/tasks-create'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/api/public/notifications'
     | '/api/public/pi-verify'
+    | '/api/public/tasks-create'
   id:
     | '__root__'
     | '/'
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/tasks/'
     | '/api/public/notifications'
     | '/api/public/pi-verify'
+    | '/api/public/tasks-create'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -167,6 +179,7 @@ export interface RootRouteChildren {
   TasksIndexRoute: typeof TasksIndexRoute
   ApiPublicNotificationsRoute: typeof ApiPublicNotificationsRoute
   ApiPublicPiVerifyRoute: typeof ApiPublicPiVerifyRoute
+  ApiPublicTasksCreateRoute: typeof ApiPublicTasksCreateRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -234,6 +247,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MessagesConversationIdRouteImport
       parentRoute: typeof MessagesRoute
     }
+    '/api/public/tasks-create': {
+      id: '/api/public/tasks-create'
+      path: '/api/public/tasks-create'
+      fullPath: '/api/public/tasks-create'
+      preLoaderRoute: typeof ApiPublicTasksCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/pi-verify': {
       id: '/api/public/pi-verify'
       path: '/api/public/pi-verify'
@@ -275,6 +295,7 @@ const rootRouteChildren: RootRouteChildren = {
   TasksIndexRoute: TasksIndexRoute,
   ApiPublicNotificationsRoute: ApiPublicNotificationsRoute,
   ApiPublicPiVerifyRoute: ApiPublicPiVerifyRoute,
+  ApiPublicTasksCreateRoute: ApiPublicTasksCreateRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
