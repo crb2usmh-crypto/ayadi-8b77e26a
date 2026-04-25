@@ -71,6 +71,11 @@ export const Route = createRootRoute({
         href: appCss,
       },
     ],
+    scripts: [
+      {
+        src: "https://sdk.minepi.com/pi-sdk.js",
+      },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
