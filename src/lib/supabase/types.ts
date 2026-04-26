@@ -18,6 +18,8 @@ export type TaskStatus = "open" | "in_progress" | "completed" | "cancelled";
 
 export type NotificationType = "offer" | "message" | "task" | "system";
 
+export type BidStatus = "pending" | "accepted" | "rejected" | "withdrawn";
+
 export interface ProfileRow {
   id: string;
   pi_uid: string;
@@ -50,6 +52,10 @@ export interface TaskRow {
   featured: boolean;
   created_at: string;
   updated_at: string;
+  /** Set when an offer is accepted. */
+  accepted_bid_id: string | null;
+  /** pi_uid of the freelancer who got the task. */
+  assignee_pi_uid: string | null;
 }
 
 /** Task joined with its owner profile (returned by list/detail queries). */
@@ -66,6 +72,51 @@ export interface NotificationRow {
   body: string;
   body_en: string | null;
   read: boolean;
+  created_at: string;
+}
+
+// ---------- Marketplace ---------------------------------------------
+
+export interface BidRow {
+  id: string;
+  task_id: string;
+  bidder_pi_uid: string;
+  amount: number;
+  message: string | null;
+  status: BidStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+/** A bid joined with its bidder's profile (returned by bids-list). */
+export interface BidWithBidder extends BidRow {
+  bidder: ProfileRow | null;
+}
+
+export interface ConversationRow {
+  id: string;
+  task_id: string;
+  bid_id: string;
+  owner_pi_uid: string;
+  bidder_pi_uid: string;
+  last_message_at: string | null;
+  created_at: string;
+}
+
+/** Conversation with both participants and the related task title. */
+export interface ConversationWithDetails extends ConversationRow {
+  task: Pick<TaskRow, "id" | "title" | "title_en" | "image_seed"> | null;
+  owner: ProfileRow | null;
+  bidder: ProfileRow | null;
+  last_message: string | null;
+  last_sender_pi_uid: string | null;
+}
+
+export interface MessageRow {
+  id: string;
+  conversation_id: string;
+  sender_pi_uid: string;
+  body: string;
   created_at: string;
 }
 
