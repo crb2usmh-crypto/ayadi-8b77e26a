@@ -204,21 +204,31 @@ export const conversationsQueryOptions = (accessToken: string | null | undefined
 // tables; writes are still server-side only).
 
 async function fetchConversation(id: string): Promise<ConversationWithDetails | null> {
-  const { data, error } = await supabase
+  const { data: conv, error } = await supabase
     .from("conversations")
-    .select(
-      `*,
-       task:tasks!conversations_task_id_fkey(id,title,title_en,image_seed),
-       owner:profiles!conversations_owner_pi_uid_fkey(*),
-       bidder:profiles!conversations_bidder_pi_uid_fkey(*)`,
-    )
+    .select("*")
     .eq("id", id)
     .maybeSingle();
 
   if (error) throw new Error(error.message);
-  if (!data) return null;
+  if (!conv) return null;
+
+  const c = conv as ConversationWithDetails;
+  const [taskRes, ownerRes, bidderRes] = await Promise.all([
+    supabase
+      .from("tasks")
+      .select("id,title,title_en,image_seed")
+      .eq("id", c.task_id)
+      .maybeSingle(),
+    supabase.from("profiles").select("*").eq("pi_uid", c.owner_pi_uid).maybeSingle(),
+    supabase.from("profiles").select("*").eq("pi_uid", c.bidder_pi_uid).maybeSingle(),
+  ]);
+
   return {
-    ...(data as ConversationWithDetails),
+    ...c,
+    task: (taskRes.data as ConversationWithDetails["task"]) ?? null,
+    owner: (ownerRes.data as ProfileRow | null) ?? null,
+    bidder: (bidderRes.data as ProfileRow | null) ?? null,
     last_message: null,
     last_sender_pi_uid: null,
   };
