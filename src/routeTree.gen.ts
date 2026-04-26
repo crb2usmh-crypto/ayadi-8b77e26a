@@ -21,6 +21,11 @@ import { Route as MessagesConversationIdRouteImport } from './routes/messages.$c
 import { Route as ApiPublicTasksCreateRouteImport } from './routes/api.public.tasks-create'
 import { Route as ApiPublicPiVerifyRouteImport } from './routes/api.public.pi-verify'
 import { Route as ApiPublicNotificationsRouteImport } from './routes/api.public.notifications'
+import { Route as ApiPublicMessagesSendRouteImport } from './routes/api.public.messages-send'
+import { Route as ApiPublicConversationsListRouteImport } from './routes/api.public.conversations-list'
+import { Route as ApiPublicBidsListRouteImport } from './routes/api.public.bids-list'
+import { Route as ApiPublicBidsCreateRouteImport } from './routes/api.public.bids-create'
+import { Route as ApiPublicBidsAcceptRouteImport } from './routes/api.public.bids-accept'
 
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
@@ -82,6 +87,32 @@ const ApiPublicNotificationsRoute = ApiPublicNotificationsRouteImport.update({
   path: '/api/public/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicMessagesSendRoute = ApiPublicMessagesSendRouteImport.update({
+  id: '/api/public/messages-send',
+  path: '/api/public/messages-send',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicConversationsListRoute =
+  ApiPublicConversationsListRouteImport.update({
+    id: '/api/public/conversations-list',
+    path: '/api/public/conversations-list',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicBidsListRoute = ApiPublicBidsListRouteImport.update({
+  id: '/api/public/bids-list',
+  path: '/api/public/bids-list',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicBidsCreateRoute = ApiPublicBidsCreateRouteImport.update({
+  id: '/api/public/bids-create',
+  path: '/api/public/bids-create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicBidsAcceptRoute = ApiPublicBidsAcceptRouteImport.update({
+  id: '/api/public/bids-accept',
+  path: '/api/public/bids-accept',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -93,6 +124,11 @@ export interface FileRoutesByFullPath {
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/messages/': typeof MessagesIndexRoute
   '/tasks/': typeof TasksIndexRoute
+  '/api/public/bids-accept': typeof ApiPublicBidsAcceptRoute
+  '/api/public/bids-create': typeof ApiPublicBidsCreateRoute
+  '/api/public/bids-list': typeof ApiPublicBidsListRoute
+  '/api/public/conversations-list': typeof ApiPublicConversationsListRoute
+  '/api/public/messages-send': typeof ApiPublicMessagesSendRoute
   '/api/public/notifications': typeof ApiPublicNotificationsRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
   '/api/public/tasks-create': typeof ApiPublicTasksCreateRoute
@@ -106,6 +142,11 @@ export interface FileRoutesByTo {
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/messages': typeof MessagesIndexRoute
   '/tasks': typeof TasksIndexRoute
+  '/api/public/bids-accept': typeof ApiPublicBidsAcceptRoute
+  '/api/public/bids-create': typeof ApiPublicBidsCreateRoute
+  '/api/public/bids-list': typeof ApiPublicBidsListRoute
+  '/api/public/conversations-list': typeof ApiPublicConversationsListRoute
+  '/api/public/messages-send': typeof ApiPublicMessagesSendRoute
   '/api/public/notifications': typeof ApiPublicNotificationsRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
   '/api/public/tasks-create': typeof ApiPublicTasksCreateRoute
@@ -121,6 +162,11 @@ export interface FileRoutesById {
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/messages/': typeof MessagesIndexRoute
   '/tasks/': typeof TasksIndexRoute
+  '/api/public/bids-accept': typeof ApiPublicBidsAcceptRoute
+  '/api/public/bids-create': typeof ApiPublicBidsCreateRoute
+  '/api/public/bids-list': typeof ApiPublicBidsListRoute
+  '/api/public/conversations-list': typeof ApiPublicConversationsListRoute
+  '/api/public/messages-send': typeof ApiPublicMessagesSendRoute
   '/api/public/notifications': typeof ApiPublicNotificationsRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
   '/api/public/tasks-create': typeof ApiPublicTasksCreateRoute
@@ -137,6 +183,11 @@ export interface FileRouteTypes {
     | '/tasks/$taskId'
     | '/messages/'
     | '/tasks/'
+    | '/api/public/bids-accept'
+    | '/api/public/bids-create'
+    | '/api/public/bids-list'
+    | '/api/public/conversations-list'
+    | '/api/public/messages-send'
     | '/api/public/notifications'
     | '/api/public/pi-verify'
     | '/api/public/tasks-create'
@@ -150,6 +201,11 @@ export interface FileRouteTypes {
     | '/tasks/$taskId'
     | '/messages'
     | '/tasks'
+    | '/api/public/bids-accept'
+    | '/api/public/bids-create'
+    | '/api/public/bids-list'
+    | '/api/public/conversations-list'
+    | '/api/public/messages-send'
     | '/api/public/notifications'
     | '/api/public/pi-verify'
     | '/api/public/tasks-create'
@@ -164,6 +220,11 @@ export interface FileRouteTypes {
     | '/tasks/$taskId'
     | '/messages/'
     | '/tasks/'
+    | '/api/public/bids-accept'
+    | '/api/public/bids-create'
+    | '/api/public/bids-list'
+    | '/api/public/conversations-list'
+    | '/api/public/messages-send'
     | '/api/public/notifications'
     | '/api/public/pi-verify'
     | '/api/public/tasks-create'
@@ -177,6 +238,11 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   TasksTaskIdRoute: typeof TasksTaskIdRoute
   TasksIndexRoute: typeof TasksIndexRoute
+  ApiPublicBidsAcceptRoute: typeof ApiPublicBidsAcceptRoute
+  ApiPublicBidsCreateRoute: typeof ApiPublicBidsCreateRoute
+  ApiPublicBidsListRoute: typeof ApiPublicBidsListRoute
+  ApiPublicConversationsListRoute: typeof ApiPublicConversationsListRoute
+  ApiPublicMessagesSendRoute: typeof ApiPublicMessagesSendRoute
   ApiPublicNotificationsRoute: typeof ApiPublicNotificationsRoute
   ApiPublicPiVerifyRoute: typeof ApiPublicPiVerifyRoute
   ApiPublicTasksCreateRoute: typeof ApiPublicTasksCreateRoute
@@ -268,6 +334,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicNotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/messages-send': {
+      id: '/api/public/messages-send'
+      path: '/api/public/messages-send'
+      fullPath: '/api/public/messages-send'
+      preLoaderRoute: typeof ApiPublicMessagesSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/conversations-list': {
+      id: '/api/public/conversations-list'
+      path: '/api/public/conversations-list'
+      fullPath: '/api/public/conversations-list'
+      preLoaderRoute: typeof ApiPublicConversationsListRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/bids-list': {
+      id: '/api/public/bids-list'
+      path: '/api/public/bids-list'
+      fullPath: '/api/public/bids-list'
+      preLoaderRoute: typeof ApiPublicBidsListRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/bids-create': {
+      id: '/api/public/bids-create'
+      path: '/api/public/bids-create'
+      fullPath: '/api/public/bids-create'
+      preLoaderRoute: typeof ApiPublicBidsCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/bids-accept': {
+      id: '/api/public/bids-accept'
+      path: '/api/public/bids-accept'
+      fullPath: '/api/public/bids-accept'
+      preLoaderRoute: typeof ApiPublicBidsAcceptRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -293,6 +394,11 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   TasksTaskIdRoute: TasksTaskIdRoute,
   TasksIndexRoute: TasksIndexRoute,
+  ApiPublicBidsAcceptRoute: ApiPublicBidsAcceptRoute,
+  ApiPublicBidsCreateRoute: ApiPublicBidsCreateRoute,
+  ApiPublicBidsListRoute: ApiPublicBidsListRoute,
+  ApiPublicConversationsListRoute: ApiPublicConversationsListRoute,
+  ApiPublicMessagesSendRoute: ApiPublicMessagesSendRoute,
   ApiPublicNotificationsRoute: ApiPublicNotificationsRoute,
   ApiPublicPiVerifyRoute: ApiPublicPiVerifyRoute,
   ApiPublicTasksCreateRoute: ApiPublicTasksCreateRoute,

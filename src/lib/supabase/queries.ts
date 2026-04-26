@@ -1,6 +1,9 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabaseClient";
 import type {
+  BidWithBidder,
+  ConversationWithDetails,
+  MessageRow,
   NotificationRow,
   ProfileRow,
   TaskCategory,
@@ -113,6 +116,114 @@ export const notificationsQueryOptions = (accessToken: string | null | undefined
     queryFn: () => (accessToken ? fetchNotifications(accessToken) : Promise.resolve([])),
     enabled: !!accessToken,
     staleTime: 15_000,
+  });
+
+// ---------- Bids -----------------------------------------------------
+
+async function fetchBidsForTask(
+  taskId: string,
+  accessToken: string,
+): Promise<BidWithBidder[]> {
+  const res = await fetch("/api/public/bids-list", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ accessToken, taskId }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Failed to load offers (${res.status})`);
+  }
+  const json = (await res.json()) as { bids: BidWithBidder[] };
+  return json.bids ?? [];
+}
+
+export const bidsForTaskQueryOptions = (
+  taskId: string,
+  accessToken: string | null | undefined,
+) =>
+  queryOptions({
+    queryKey: ["bids", taskId, accessToken ? "auth" : "anon"],
+    queryFn: () =>
+      accessToken ? fetchBidsForTask(taskId, accessToken) : Promise.resolve([]),
+    enabled: !!accessToken,
+    staleTime: 10_000,
+  });
+
+// ---------- Conversations -------------------------------------------
+
+async function fetchConversations(
+  accessToken: string,
+): Promise<ConversationWithDetails[]> {
+  const res = await fetch("/api/public/conversations-list", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ accessToken }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Failed to load conversations (${res.status})`);
+  }
+  const json = (await res.json()) as { conversations: ConversationWithDetails[] };
+  return json.conversations ?? [];
+}
+
+export const conversationsQueryOptions = (accessToken: string | null | undefined) =>
+  queryOptions({
+    queryKey: ["conversations", accessToken ? "auth" : "anon"],
+    queryFn: () =>
+      accessToken ? fetchConversations(accessToken) : Promise.resolve([]),
+    enabled: !!accessToken,
+    staleTime: 15_000,
+  });
+
+// ---------- Single conversation + messages --------------------------
+// Reads come straight from Supabase (RLS allows public SELECT on these
+// tables; writes are still server-side only).
+
+async function fetchConversation(id: string): Promise<ConversationWithDetails | null> {
+  const { data, error } = await supabase
+    .from("conversations")
+    .select(
+      `*,
+       task:tasks!conversations_task_id_fkey(id,title,title_en,image_seed),
+       owner:profiles!conversations_owner_pi_uid_fkey(*),
+       bidder:profiles!conversations_bidder_pi_uid_fkey(*)`,
+    )
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  return {
+    ...(data as ConversationWithDetails),
+    last_message: null,
+    last_sender_pi_uid: null,
+  };
+}
+
+export const conversationQueryOptions = (id: string) =>
+  queryOptions({
+    queryKey: ["conversation", id],
+    queryFn: () => fetchConversation(id),
+    staleTime: 30_000,
+  });
+
+async function fetchMessages(conversationId: string): Promise<MessageRow[]> {
+  const { data, error } = await supabase
+    .from("messages")
+    .select("*")
+    .eq("conversation_id", conversationId)
+    .order("created_at", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as MessageRow[];
+}
+
+export const messagesQueryOptions = (conversationId: string) =>
+  queryOptions({
+    queryKey: ["messages", conversationId],
+    queryFn: () => fetchMessages(conversationId),
+    staleTime: 0,
   });
 
 // ---------- Helpers --------------------------------------------------
