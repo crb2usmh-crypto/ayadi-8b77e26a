@@ -19,6 +19,7 @@ import { Route as TasksIndexRouteImport } from './routes/tasks.index'
 import { Route as MessagesIndexRouteImport } from './routes/messages.index'
 import { Route as TasksTaskIdRouteImport } from './routes/tasks.$taskId'
 import { Route as MessagesConversationIdRouteImport } from './routes/messages.$conversationId'
+import { Route as ApiPublicValidationKeyRouteImport } from './routes/api.public.validation-key'
 import { Route as ApiPublicTasksCreateRouteImport } from './routes/api.public.tasks-create'
 import { Route as ApiPublicPiVerifyRouteImport } from './routes/api.public.pi-verify'
 import { Route as ApiPublicNotificationsRouteImport } from './routes/api.public.notifications'
@@ -77,6 +78,11 @@ const MessagesConversationIdRoute = MessagesConversationIdRouteImport.update({
   id: '/$conversationId',
   path: '/$conversationId',
   getParentRoute: () => MessagesRoute,
+} as any)
+const ApiPublicValidationKeyRoute = ApiPublicValidationKeyRouteImport.update({
+  id: '/api/public/validation-key',
+  path: '/api/public/validation-key',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicTasksCreateRoute = ApiPublicTasksCreateRouteImport.update({
   id: '/api/public/tasks-create',
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/api/public/notifications': typeof ApiPublicNotificationsRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
   '/api/public/tasks-create': typeof ApiPublicTasksCreateRoute
+  '/api/public/validation-key': typeof ApiPublicValidationKeyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByTo {
   '/api/public/notifications': typeof ApiPublicNotificationsRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
   '/api/public/tasks-create': typeof ApiPublicTasksCreateRoute
+  '/api/public/validation-key': typeof ApiPublicValidationKeyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   '/api/public/notifications': typeof ApiPublicNotificationsRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
   '/api/public/tasks-create': typeof ApiPublicTasksCreateRoute
+  '/api/public/validation-key': typeof ApiPublicValidationKeyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -201,6 +210,7 @@ export interface FileRouteTypes {
     | '/api/public/notifications'
     | '/api/public/pi-verify'
     | '/api/public/tasks-create'
+    | '/api/public/validation-key'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -220,6 +230,7 @@ export interface FileRouteTypes {
     | '/api/public/notifications'
     | '/api/public/pi-verify'
     | '/api/public/tasks-create'
+    | '/api/public/validation-key'
   id:
     | '__root__'
     | '/'
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | '/api/public/notifications'
     | '/api/public/pi-verify'
     | '/api/public/tasks-create'
+    | '/api/public/validation-key'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -259,6 +271,7 @@ export interface RootRouteChildren {
   ApiPublicNotificationsRoute: typeof ApiPublicNotificationsRoute
   ApiPublicPiVerifyRoute: typeof ApiPublicPiVerifyRoute
   ApiPublicTasksCreateRoute: typeof ApiPublicTasksCreateRoute
+  ApiPublicValidationKeyRoute: typeof ApiPublicValidationKeyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -332,6 +345,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/messages/$conversationId'
       preLoaderRoute: typeof MessagesConversationIdRouteImport
       parentRoute: typeof MessagesRoute
+    }
+    '/api/public/validation-key': {
+      id: '/api/public/validation-key'
+      path: '/api/public/validation-key'
+      fullPath: '/api/public/validation-key'
+      preLoaderRoute: typeof ApiPublicValidationKeyRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/tasks-create': {
       id: '/api/public/tasks-create'
@@ -423,6 +443,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicNotificationsRoute: ApiPublicNotificationsRoute,
   ApiPublicPiVerifyRoute: ApiPublicPiVerifyRoute,
   ApiPublicTasksCreateRoute: ApiPublicTasksCreateRoute,
+  ApiPublicValidationKeyRoute: ApiPublicValidationKeyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
