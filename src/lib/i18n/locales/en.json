@@ -69,7 +69,33 @@
     "messagePlaceholder": "Write a short message to the task owner...",
     "submitOffer": "Send offer",
     "offerSent": "Your offer has been sent! 🎉",
-    "publisher": "Task owner"
+    "publisher": "Task owner",
+    "loginToBid": "Sign in with Pi to submit an offer",
+    "loginNow": "Sign in",
+    "taskClosed": "This task is no longer open for offers",
+    "ownTaskHint": "You can't bid on your own task",
+    "submitting": "Submitting...",
+    "offersSection": "Submitted offers",
+    "offersSectionHint": "Review offers and pick the best fit",
+    "noOffers": "No offers yet",
+    "loadingOffers": "Loading offers...",
+    "acceptOffer": "Accept",
+    "accepting": "Accepting...",
+    "acceptConfirmTitle": "Accept this offer?",
+    "acceptConfirmDesc": "The task status will change to \"in progress\" and all other offers will be rejected automatically.",
+    "acceptSuccess": "Offer accepted successfully 🎉",
+    "bidStatus": {
+      "pending": "Pending",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "withdrawn": "Withdrawn"
+    },
+    "taskStatus": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    }
   },
   "post": {
     "title": "Post a new task",

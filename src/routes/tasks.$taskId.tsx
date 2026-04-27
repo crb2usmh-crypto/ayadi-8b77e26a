@@ -1,9 +1,9 @@
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowLeft, MapPin, Clock, Users, Wallet, Star } from "lucide-react";
+import { ArrowLeft, MapPin, Clock, Users, Wallet, Star, CheckCircle2, Inbox, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,11 +19,24 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { PageTransition } from "@/components/layout/PageTransition";
-import { taskQueryOptions } from "@/lib/supabase/queries";
+import { bidsForTaskQueryOptions, taskQueryOptions } from "@/lib/supabase/queries";
 import { getAvatarUrl, getTaskImage } from "@/lib/supabase/types";
+import type { BidWithBidder } from "@/lib/supabase/types";
 import { isRtl } from "@/lib/i18n/config";
 import { fireConfetti } from "@/lib/confetti";
+import { usePiAuth } from "@/components/providers/PiAuthProvider";
 
 export const Route = createFileRoute("/tasks/$taskId")({
   loader: async ({ params, context: { queryClient } }) => {
@@ -65,6 +78,11 @@ function TaskDetail() {
   const { t, i18n } = useTranslation();
   const rtl = isRtl(i18n.language);
   const [open, setOpen] = useState(false);
+  const { session } = usePiAuth();
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const [amount, setAmount] = useState<string>("");
+  const [message, setMessage] = useState<string>("");
   const { scrollY } = useScroll();
   const heroY = useTransform(scrollY, [0, 400], [0, 80]);
   const heroScale = useTransform(scrollY, [0, 400], [1, 1.15]);
@@ -80,13 +98,54 @@ function TaskDetail() {
   const ownerRating = task.owner?.rating ?? 0;
   const ownerCompleted = task.owner?.completed_tasks ?? 0;
 
-  const handleSubmitOffer = (e: React.FormEvent) => {
-    e.preventDefault();
-    setOpen(false);
-    setTimeout(() => {
+  const isLoggedIn = !!session;
+  const isOwner = !!session && session.user.uid === task.owner_pi_uid;
+  const isOpen = task.status === "open";
+  const canBid = isLoggedIn && !isOwner && isOpen;
+
+  const createBid = useMutation({
+    mutationFn: async () => {
+      if (!session) throw new Error(t("task.loginToBid"));
+      const res = await fetch("/api/public/bids-create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accessToken: session.accessToken,
+          taskId: task.id,
+          amount: Number(amount),
+          message: message.trim() || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Failed (${res.status})`);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      setOpen(false);
+      setMessage("");
       fireConfetti();
       toast.success(t("task.offerSent"));
-    }, 200);
+      queryClient.invalidateQueries({ queryKey: ["bids", task.id] });
+      router.invalidate();
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
+    },
+  });
+
+  const handleSubmitOffer = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!session) {
+      toast.error(t("task.loginToBid"));
+      return;
+    }
+    if (!amount || Number(amount) <= 0) {
+      toast.error(t("task.yourPrice"));
+      return;
+    }
+    createBid.mutate();
   };
 
   return (
@@ -142,6 +201,11 @@ function TaskDetail() {
                 {new Date(task.created_at).toLocaleDateString(rtl ? "ar" : "en")}
               </div>
             </div>
+
+            {/* Owner-only: bids list */}
+            {isOwner && (
+              <BidsSection taskId={task.id} taskStatus={task.status} accessToken={session!.accessToken} />
+            )}
           </div>
 
           {/* Sidebar — publisher + apply */}
@@ -162,52 +226,103 @@ function TaskDetail() {
               </div>
             </div>
 
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  size="lg"
-                  className="w-full rounded-full gradient-brand text-white shadow-lg shadow-primary/40 hover:scale-[1.02]"
-                >
-                  {t("task.applyNow")}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="glass-card border-0 sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="text-xl gradient-text">{t("task.applyTitle")}</DialogTitle>
-                  <DialogDescription>{title}</DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleSubmitOffer} className="space-y-4">
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium">{t("task.yourPrice")}</label>
-                    <div className="relative">
-                      <Input
-                        type="number"
-                        required
-                        defaultValue={task.budget}
-                        className="rounded-xl pe-14"
-                      />
-                      <span className="absolute end-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                        {t("common.currency")}
-                      </span>
+            {/* Status badge */}
+            <div className="glass-card rounded-3xl p-3 text-center text-sm">
+              <span className="text-muted-foreground">{t("task.taskStatus." + task.status)}</span>
+            </div>
+
+            {/* CTA area */}
+            {canBid && (
+              <Dialog
+                open={open}
+                onOpenChange={(next) => {
+                  setOpen(next);
+                  if (next && !amount) setAmount(String(task.budget));
+                }}
+              >
+                <DialogTrigger asChild>
+                  <Button
+                    size="lg"
+                    className="w-full rounded-full gradient-brand text-white shadow-lg shadow-primary/40 hover:scale-[1.02]"
+                  >
+                    {t("task.applyNow")}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="glass-card border-0 sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl gradient-text">{t("task.applyTitle")}</DialogTitle>
+                    <DialogDescription>{title}</DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmitOffer} className="space-y-4">
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium">{t("task.yourPrice")}</label>
+                      <div className="relative">
+                        <Input
+                          type="number"
+                          min={1}
+                          required
+                          value={amount}
+                          onChange={(e) => setAmount(e.target.value)}
+                          className="rounded-xl pe-14"
+                        />
+                        <span className="absolute end-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                          {t("common.currency")}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium">{t("task.yourMessage")}</label>
-                    <Textarea
-                      required
-                      placeholder={t("task.messagePlaceholder")}
-                      rows={4}
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <DialogFooter>
-                    <Button type="submit" className="w-full rounded-full gradient-brand text-white">
-                      {t("task.submitOffer")}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium">{t("task.yourMessage")}</label>
+                      <Textarea
+                        placeholder={t("task.messagePlaceholder")}
+                        rows={4}
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        className="rounded-xl"
+                      />
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        type="submit"
+                        disabled={createBid.isPending}
+                        className="w-full rounded-full gradient-brand text-white"
+                      >
+                        {createBid.isPending ? (
+                          <>
+                            <Loader2 className="me-2 size-4 animate-spin" />
+                            {t("task.submitting")}
+                          </>
+                        ) : (
+                          t("task.submitOffer")
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            )}
+
+            {!isLoggedIn && (
+              <div className="glass-card rounded-3xl p-4 text-center text-sm">
+                <p className="mb-3 text-muted-foreground">{t("task.loginToBid")}</p>
+                <Link to="/auth">
+                  <Button size="sm" className="rounded-full gradient-brand text-white">
+                    {t("task.loginNow")}
+                  </Button>
+                </Link>
+              </div>
+            )}
+
+            {isLoggedIn && isOwner && (
+              <div className="glass-card rounded-3xl p-4 text-center text-xs text-muted-foreground">
+                {t("task.ownTaskHint")}
+              </div>
+            )}
+
+            {isLoggedIn && !isOwner && !isOpen && (
+              <div className="glass-card rounded-3xl p-4 text-center text-xs text-muted-foreground">
+                {t("task.taskClosed")}
+              </div>
+            )}
           </aside>
         </div>
       </div>
@@ -230,5 +345,191 @@ function Stat({
       <p className="text-[11px] text-muted-foreground">{label}</p>
       <p className="text-sm font-bold">{value}</p>
     </div>
+  );
+}
+
+// ---------- Bids section (owner-only) ----------
+
+function BidsSection({
+  taskId,
+  taskStatus,
+  accessToken,
+}: {
+  taskId: string;
+  taskStatus: string;
+  accessToken: string;
+}) {
+  const { t } = useTranslation();
+  const { data: bids, isLoading } = useQuery(bidsForTaskQueryOptions(taskId, accessToken));
+
+  return (
+    <div className="glass-card rounded-3xl p-6">
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold">{t("task.offersSection")}</h2>
+          <p className="text-xs text-muted-foreground">{t("task.offersSectionHint")}</p>
+        </div>
+        <Badge variant="secondary" className="rounded-full">
+          {bids?.length ?? 0}
+        </Badge>
+      </div>
+
+      {isLoading && (
+        <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+          <Loader2 className="me-2 size-4 animate-spin" />
+          {t("task.loadingOffers")}
+        </div>
+      )}
+
+      {!isLoading && (!bids || bids.length === 0) && (
+        <div className="flex flex-col items-center justify-center gap-2 py-10 text-muted-foreground">
+          <Inbox className="size-10 opacity-50" />
+          <p className="text-sm">{t("task.noOffers")}</p>
+        </div>
+      )}
+
+      {!isLoading && bids && bids.length > 0 && (
+        <ul className="space-y-3">
+          {bids.map((bid) => (
+            <BidCard key={bid.id} bid={bid} taskId={taskId} taskStatus={taskStatus} accessToken={accessToken} />
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function BidCard({
+  bid,
+  taskId,
+  taskStatus,
+  accessToken,
+}: {
+  bid: BidWithBidder;
+  taskId: string;
+  taskStatus: string;
+  accessToken: string;
+}) {
+  const { t, i18n } = useTranslation();
+  const rtl = isRtl(i18n.language);
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const bidderName = bid.bidder?.display_name || bid.bidder?.username || "—";
+  const bidderSeed = bid.bidder?.avatar_seed || bid.bidder?.username || "anon";
+  const bidderRating = bid.bidder?.rating ?? 0;
+
+  const accept = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/public/bids-accept", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accessToken, bidId: bid.id }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Failed (${res.status})`);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      fireConfetti();
+      toast.success(t("task.acceptSuccess"));
+      queryClient.invalidateQueries({ queryKey: ["bids", taskId] });
+      queryClient.invalidateQueries({ queryKey: ["tasks", taskId] });
+      router.invalidate();
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const statusVariant: Record<string, string> = {
+    pending: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+    accepted: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+    rejected: "bg-rose-500/15 text-rose-700 dark:text-rose-300",
+    withdrawn: "bg-muted text-muted-foreground",
+  };
+
+  const showAccept = bid.status === "pending" && taskStatus === "open";
+
+  return (
+    <li className="rounded-2xl border border-border/50 bg-background/60 p-4 transition-all hover:border-primary/30 hover:shadow-md">
+      <div className="flex items-start gap-3">
+        <Avatar className="size-12 ring-2 ring-primary/10">
+          <AvatarImage src={getAvatarUrl(bidderSeed, 80)} />
+          <AvatarFallback>{bidderName[0]}</AvatarFallback>
+        </Avatar>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="truncate font-semibold">{bidderName}</p>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Star className="size-3 fill-yellow-400 text-yellow-400" />
+                {Number(bidderRating).toFixed(1)}
+                <span>·</span>
+                <span>
+                  {new Date(bid.created_at).toLocaleDateString(rtl ? "ar" : "en")}
+                </span>
+              </div>
+            </div>
+            <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-medium ${statusVariant[bid.status] ?? ""}`}>
+              {t(`task.bidStatus.${bid.status}`)}
+              {bid.status === "accepted" && <CheckCircle2 className="ms-1 inline size-3" />}
+            </span>
+          </div>
+
+          <div className="mt-2 flex items-baseline gap-1">
+            <span className="text-xl font-extrabold gradient-text">{bid.amount}</span>
+            <span className="text-xs text-muted-foreground">{t("common.currency")}</span>
+          </div>
+
+          {bid.message && (
+            <p className="mt-2 rounded-xl bg-muted/50 p-3 text-sm text-muted-foreground">
+              {bid.message}
+            </p>
+          )}
+
+          {showAccept && (
+            <div className="mt-3 flex justify-end">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    disabled={accept.isPending}
+                    className="rounded-full gradient-brand text-white"
+                  >
+                    {accept.isPending ? (
+                      <>
+                        <Loader2 className="me-2 size-3 animate-spin" />
+                        {t("task.accepting")}
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="me-1 size-4" />
+                        {t("task.acceptOffer")}
+                      </>
+                    )}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="glass-card border-0">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t("task.acceptConfirmTitle")}</AlertDialogTitle>
+                    <AlertDialogDescription>{t("task.acceptConfirmDesc")}</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="rounded-full">{t("common.cancel")}</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => accept.mutate()}
+                      className="rounded-full gradient-brand text-white"
+                    >
+                      {t("task.acceptOffer")}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
+        </div>
+      </div>
+    </li>
   );
 }
