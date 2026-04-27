@@ -69,7 +69,33 @@
     "messagePlaceholder": "اكتب رسالة قصيرة لصاحب المهمة...",
     "submitOffer": "إرسال العرض",
     "offerSent": "تم إرسال عرضك بنجاح! 🎉",
-    "publisher": "صاحب المهمة"
+    "publisher": "صاحب المهمة",
+    "loginToBid": "سجّل دخولك بـ Pi لتقديم عرض",
+    "loginNow": "تسجيل الدخول",
+    "taskClosed": "هذه المهمة لم تعد مفتوحة للعروض",
+    "ownTaskHint": "لا يمكنك تقديم عرض على مهمتك",
+    "submitting": "جارٍ الإرسال...",
+    "offersSection": "العروض المقدمة",
+    "offersSectionHint": "راجع العروض واختر الأنسب",
+    "noOffers": "لا توجد عروض حتى الآن",
+    "loadingOffers": "جارٍ تحميل العروض...",
+    "acceptOffer": "قبول",
+    "accepting": "جارٍ القبول...",
+    "acceptConfirmTitle": "قبول هذا العرض؟",
+    "acceptConfirmDesc": "ستتغيّر حالة المهمة إلى \"قيد التنفيذ\" وسيُرفض باقي العروض تلقائياً.",
+    "acceptSuccess": "تم قبول العرض بنجاح 🎉",
+    "bidStatus": {
+      "pending": "قيد المراجعة",
+      "accepted": "مقبول",
+      "rejected": "مرفوض",
+      "withdrawn": "مسحوب"
+    },
+    "taskStatus": {
+      "open": "مفتوحة",
+      "in_progress": "قيد التنفيذ",
+      "completed": "مكتملة",
+      "cancelled": "ملغاة"
+    }
   },
   "post": {
     "title": "انشر مهمة جديدة",
