@@ -44,7 +44,7 @@ export function AppHeader() {
     if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
     tapTimerRef.current = setTimeout(() => {
       tapCountRef.current = 0;
-    }, 1500);
+    }, 3000);
 
     if (tapCountRef.current >= 5) {
       tapCountRef.current = 0;
@@ -60,8 +60,13 @@ export function AppHeader() {
   return (
     <header className="glass-header sticky top-0 z-40">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 md:px-6">
-        <a href="/" onClick={handleLogoTap} className="flex items-center gap-2 cursor-pointer">
-          <div className="flex size-9 items-center justify-center rounded-2xl gradient-brand text-white shadow-lg select-none">
+        <a
+          href="/"
+          onClick={handleLogoTap}
+          className="flex items-center gap-2 cursor-pointer -m-2 p-2 rounded-2xl"
+          aria-label="Ayadi home"
+        >
+          <div className="flex size-11 items-center justify-center rounded-2xl gradient-brand text-white shadow-lg select-none">
             <Hand className="size-5" />
           </div>
           <div className="hidden sm:block">
