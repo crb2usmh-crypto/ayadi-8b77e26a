@@ -1,5 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Hand, Shield, Wallet, ExternalLink, LogIn } from "lucide-react";
 import { toast } from "sonner";
@@ -17,7 +17,9 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { isPiBrowser, session, loading, error, login } = usePiAuth();
+  const { isPiBrowser, session, loading, error, login, loginAsDev } = usePiAuth();
+  const tapCountRef = useRef(0);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // If already signed in, bounce to home.
   useEffect(() => {
@@ -36,11 +38,31 @@ function AuthPage() {
     }
   };
 
+  const handleSecretTap = () => {
+    tapCountRef.current += 1;
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    tapTimerRef.current = setTimeout(() => {
+      tapCountRef.current = 0;
+    }, 3000);
+    if (tapCountRef.current >= 5) {
+      tapCountRef.current = 0;
+      if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+      loginAsDev();
+      toast.success("Developer Mode — تم تسجيل الدخول كمطور");
+      navigate({ to: "/" });
+    }
+  };
+
   return (
     <div className="relative flex min-h-screen items-center justify-center px-4 py-10 bg-gradient-page-auth">
       <GradientOrbs />
       <div className="w-full max-w-md">
-        <Link to="/" className="mb-8 flex items-center justify-center gap-2">
+        <button
+          type="button"
+          onClick={handleSecretTap}
+          className="mb-8 flex w-full items-center justify-center gap-2 p-3 rounded-2xl"
+          aria-label="logo"
+        >
           <div className="flex size-12 items-center justify-center rounded-2xl gradient-brand text-white shadow-lg">
             <Hand className="size-6" />
           </div>
@@ -48,7 +70,7 @@ function AuthPage() {
             <p className="text-2xl font-extrabold gradient-text leading-none">{t("app.name")}</p>
             <p className="text-xs text-muted-foreground">{t("app.tagline")}</p>
           </div>
-        </Link>
+        </button>
 
         <div className="glass-card rounded-3xl p-6 shadow-2xl md:p-8">
           {isPiBrowser ? (
@@ -56,6 +78,17 @@ function AuthPage() {
           ) : (
             <PiBrowserRequired />
           )}
+        </div>
+
+        <div className="mt-6 flex justify-center">
+          <button
+            type="button"
+            onClick={handleSecretTap}
+            className="text-[11px] text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors px-3 py-2 select-none"
+            aria-label="dev"
+          >
+            Dev
+          </button>
         </div>
       </div>
     </div>
