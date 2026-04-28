@@ -200,62 +200,48 @@ export const conversationsQueryOptions = (accessToken: string | null | undefined
   });
 
 // ---------- Single conversation + messages --------------------------
-// Reads come straight from Supabase (RLS allows public SELECT on these
-// tables; writes are still server-side only).
+// Reads go through a server route that verifies the caller is one of the
+// two conversation participants (owner or bidder) via their Pi access
+// token. The `conversations` and `messages` tables are NOT directly
+// readable from the browser anon key.
 
-async function fetchConversation(id: string): Promise<ConversationWithDetails | null> {
-  const { data: conv, error } = await supabase
-    .from("conversations")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
-
-  if (error) throw new Error(error.message);
-  if (!conv) return null;
-
-  const c = conv as ConversationWithDetails;
-  const [taskRes, ownerRes, bidderRes] = await Promise.all([
-    supabase
-      .from("tasks")
-      .select("id,title,title_en,image_seed")
-      .eq("id", c.task_id)
-      .maybeSingle(),
-    supabase.from("profiles").select("*").eq("pi_uid", c.owner_pi_uid).maybeSingle(),
-    supabase.from("profiles").select("*").eq("pi_uid", c.bidder_pi_uid).maybeSingle(),
-  ]);
-
+async function fetchConversationAndMessages(
+  id: string,
+  accessToken: string,
+): Promise<{
+  conversation: ConversationWithDetails | null;
+  messages: MessageRow[];
+}> {
+  const res = await fetch("/api/public/messages-list", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ accessToken, conversationId: id }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Failed to load conversation (${res.status})`);
+  }
+  const json = (await res.json()) as {
+    conversation: ConversationWithDetails | null;
+    messages: MessageRow[];
+  };
   return {
-    ...c,
-    task: (taskRes.data as ConversationWithDetails["task"]) ?? null,
-    owner: (ownerRes.data as ProfileRow | null) ?? null,
-    bidder: (bidderRes.data as ProfileRow | null) ?? null,
-    last_message: null,
-    last_sender_pi_uid: null,
+    conversation: json.conversation ?? null,
+    messages: json.messages ?? [],
   };
 }
 
-export const conversationQueryOptions = (id: string) =>
+export const conversationBundleQueryOptions = (
+  id: string,
+  accessToken: string | null | undefined,
+) =>
   queryOptions({
-    queryKey: ["conversation", id],
-    queryFn: () => fetchConversation(id),
-    staleTime: 30_000,
-  });
-
-async function fetchMessages(conversationId: string): Promise<MessageRow[]> {
-  const { data, error } = await supabase
-    .from("messages")
-    .select("*")
-    .eq("conversation_id", conversationId)
-    .order("created_at", { ascending: true });
-
-  if (error) throw new Error(error.message);
-  return (data ?? []) as MessageRow[];
-}
-
-export const messagesQueryOptions = (conversationId: string) =>
-  queryOptions({
-    queryKey: ["messages", conversationId],
-    queryFn: () => fetchMessages(conversationId),
+    queryKey: ["conversation-bundle", id, accessToken ? "auth" : "anon"],
+    queryFn: () =>
+      accessToken
+        ? fetchConversationAndMessages(id, accessToken)
+        : Promise.resolve({ conversation: null, messages: [] }),
+    enabled: !!accessToken,
     staleTime: 0,
   });
 
