@@ -5,6 +5,7 @@ import { AppHeader } from "./AppHeader";
 import { FloatingSidebar } from "./FloatingSidebar";
 import { BottomNavigation } from "./BottomNavigation";
 import { GradientOrbs } from "./GradientOrbs";
+import { DevFooter } from "./DevFooter";
 import { cn } from "@/lib/utils";
 import { usePiAuth } from "@/components/providers/PiAuthProvider";
 
@@ -44,6 +45,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </main>
       </AnimatePresence>
       {!isAuth && <BottomNavigation />}
+      <DevFooter />
     </div>
   );
 }
