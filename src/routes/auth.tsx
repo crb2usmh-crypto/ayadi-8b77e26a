@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Hand, Shield, Wallet, ExternalLink, LogIn } from "lucide-react";
 import { toast } from "sonner";
@@ -17,7 +17,8 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { isPiBrowser, session, loading, error, login } = usePiAuth();
+  const { isPiBrowser, session, loading, error, login, loginAsDev } = usePiAuth();
+  const [tapCount, setTapCount] = useState(0);
 
   // If already signed in, bounce to home.
   useEffect(() => {
@@ -33,6 +34,18 @@ function AuthPage() {
       navigate({ to: "/" });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("auth.error"));
+    }
+  };
+
+  const handleSecretTap = () => {
+    const next = tapCount + 1;
+    setTapCount(next);
+    if (next >= 5) {
+      loginAsDev();
+      toast.success("Developer Mode — تم تسجيل الدخول كمطور");
+      navigate({ to: "/" });
+    } else if (next >= 3) {
+      toast.message(`Developer Mode in ${5 - next}...`);
     }
   };
 
@@ -57,6 +70,14 @@ function AuthPage() {
             <PiBrowserRequired />
           )}
         </div>
+
+        {/* Hidden Developer Mode trigger — tap 5 times */}
+        <button
+          type="button"
+          onClick={handleSecretTap}
+          aria-label="Developer mode"
+          className="mx-auto mt-6 block size-3 rounded-full bg-muted-foreground/20 transition-opacity hover:opacity-100 opacity-30"
+        />
       </div>
     </div>
   );
