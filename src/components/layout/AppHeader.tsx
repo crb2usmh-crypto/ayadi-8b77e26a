@@ -36,6 +36,11 @@ export function AppHeader() {
   const toggleLang = () => {
     const next = i18n.language === "ar" ? "en" : "ar";
     i18n.changeLanguage(next);
+    try {
+      window.localStorage.setItem("ayadi-lang", next);
+    } catch {
+      // ignore
+    }
   };
 
   const handleLogoTap = (e: React.MouseEvent) => {
