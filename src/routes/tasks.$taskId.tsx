@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowLeft, MapPin, Clock, Users, Wallet, Star, CheckCircle2, Inbox, Loader2 } from "lucide-react";
+import { ArrowLeft, MapPin, Clock, Users, Wallet, Star, CheckCircle2, Inbox, Loader2, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,9 +31,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { PageTransition } from "@/components/layout/PageTransition";
-import { bidsForTaskQueryOptions, taskQueryOptions } from "@/lib/supabase/queries";
+import { bidsForTaskQueryOptions, conversationsQueryOptions, taskQueryOptions } from "@/lib/supabase/queries";
 import { getAvatarUrl, getTaskImage } from "@/lib/supabase/types";
-import type { BidWithBidder } from "@/lib/supabase/types";
+import type { BidWithBidder, ConversationWithDetails } from "@/lib/supabase/types";
 import { isRtl } from "@/lib/i18n/config";
 import { fireConfetti } from "@/lib/confetti";
 import { usePiAuth } from "@/components/providers/PiAuthProvider";
@@ -102,6 +102,21 @@ function TaskDetail() {
   const isOwner = !!session && session.user.uid === task.owner_pi_uid;
   const isOpen = task.status === "open";
   const canBid = isLoggedIn && !isOwner && isOpen;
+  const isAssignee =
+    !!session && task.assignee_pi_uid === session.user.uid;
+  const canChat =
+    isLoggedIn &&
+    task.status === "in_progress" &&
+    (isOwner || isAssignee);
+
+  // Find the conversation tied to this task (only loaded when relevant).
+  const { data: conversations = [] } = useQuery({
+    ...conversationsQueryOptions(session?.accessToken),
+    enabled: !!session && canChat,
+  });
+  const taskConversation = conversations.find(
+    (c: ConversationWithDetails) => c.task_id === task.id,
+  );
 
   const createBid = useMutation({
     mutationFn: async () => {
@@ -230,6 +245,28 @@ function TaskDetail() {
             <div className="glass-card rounded-3xl p-3 text-center text-sm">
               <span className="text-muted-foreground">{t("task.taskStatus." + task.status)}</span>
             </div>
+
+            {/* Chat button (in_progress only, owner or assignee) */}
+            {canChat && (
+              taskConversation ? (
+                <Link
+                  to="/messages/$conversationId"
+                  params={{ conversationId: taskConversation.id }}
+                >
+                  <Button
+                    size="lg"
+                    className="w-full rounded-full gradient-brand text-white shadow-lg shadow-primary/40"
+                  >
+                    <MessageCircle className="me-2 size-5" />
+                    {t("task.openChat")}
+                  </Button>
+                </Link>
+              ) : (
+                <div className="glass-card rounded-3xl p-3 text-center text-xs text-muted-foreground">
+                  {t("task.chatNotReady")}
+                </div>
+              )
+            )}
 
             {/* CTA area */}
             {canBid && (
