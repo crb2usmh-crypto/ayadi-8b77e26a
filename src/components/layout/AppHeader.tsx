@@ -1,6 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Globe, Moon, Sun, Hand, LogOut, User as UserIcon, Settings } from "lucide-react";
+import { useRef } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -19,8 +21,10 @@ import { usePiAuth } from "@/components/providers/PiAuthProvider";
 export function AppHeader() {
   const { t, i18n } = useTranslation();
   const { theme, toggleTheme } = useTheme();
-  const { session, logout } = usePiAuth();
+  const { session, logout, loginAsDev } = usePiAuth();
   const navigate = useNavigate();
+  const tapCountRef = useRef(0);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const displayName = session?.user.username ?? "Guest";
   const avatarSeed = session?.user.username ?? "anon";
@@ -34,18 +38,37 @@ export function AppHeader() {
     i18n.changeLanguage(next);
   };
 
+  const handleLogoTap = (e: React.MouseEvent) => {
+    e.preventDefault();
+    tapCountRef.current += 1;
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    tapTimerRef.current = setTimeout(() => {
+      tapCountRef.current = 0;
+    }, 1500);
+
+    if (tapCountRef.current >= 5) {
+      tapCountRef.current = 0;
+      if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+      loginAsDev();
+      toast.success("Developer Mode — تم تسجيل الدخول كمطور");
+      navigate({ to: "/" });
+    } else {
+      navigate({ to: "/" });
+    }
+  };
+
   return (
     <header className="glass-header sticky top-0 z-40">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 md:px-6">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="flex size-9 items-center justify-center rounded-2xl gradient-brand text-white shadow-lg">
+        <a href="/" onClick={handleLogoTap} className="flex items-center gap-2 cursor-pointer">
+          <div className="flex size-9 items-center justify-center rounded-2xl gradient-brand text-white shadow-lg select-none">
             <Hand className="size-5" />
           </div>
           <div className="hidden sm:block">
             <p className="text-lg font-bold leading-none gradient-text">{t("app.name")}</p>
             <p className="text-[10px] text-muted-foreground leading-tight">{t("app.tagline")}</p>
           </div>
-        </Link>
+        </a>
 
         <div className="flex items-center gap-1">
           <Button
