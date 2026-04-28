@@ -84,6 +84,8 @@
     "acceptConfirmTitle": "قبول هذا العرض؟",
     "acceptConfirmDesc": "ستتغيّر حالة المهمة إلى \"قيد التنفيذ\" وسيُرفض باقي العروض تلقائياً.",
     "acceptSuccess": "تم قبول العرض بنجاح 🎉",
+    "openChat": "مراسلة",
+    "chatNotReady": "المحادثة قيد التحضير...",
     "bidStatus": {
       "pending": "قيد المراجعة",
       "accepted": "مقبول",
@@ -133,7 +135,9 @@
     "empty": "لا توجد محادثات",
     "selectChat": "اختر محادثة لعرض الرسائل",
     "typePlaceholder": "اكتب رسالة...",
-    "send": "إرسال"
+    "send": "إرسال",
+    "loginRequired": "سجّل دخولك لرؤية محادثاتك",
+    "unauthorized": "ليس لديك صلاحية الوصول لهذه المحادثة"
   },
   "notifications": {
     "title": "الإشعارات",
