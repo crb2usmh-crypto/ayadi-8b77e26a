@@ -32,6 +32,7 @@ interface PiAuthContextValue {
   loading: boolean;
   error: string | null;
   login: (scopes?: PiScope[]) => Promise<void>;
+  loginAsDev: () => void;
   logout: () => void;
 }
 
@@ -112,9 +113,18 @@ export function PiAuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
   }, []);
 
+  const loginAsDev = useCallback(() => {
+    const devSession: PiSession = {
+      accessToken: "dev-mode-token",
+      user: { uid: "dev-user-uid", username: "مطور" },
+    };
+    saveSession(devSession);
+    setSession(devSession);
+  }, []);
+
   const value = useMemo<PiAuthContextValue>(
-    () => ({ isPiBrowser, session, loading, error, login, logout }),
-    [isPiBrowser, session, loading, error, login, logout],
+    () => ({ isPiBrowser, session, loading, error, login, loginAsDev, logout }),
+    [isPiBrowser, session, loading, error, login, loginAsDev, logout],
   );
 
   return <PiAuthContext.Provider value={value}>{children}</PiAuthContext.Provider>;
