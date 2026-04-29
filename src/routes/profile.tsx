@@ -11,9 +11,11 @@ import { PageTransition } from "@/components/layout/PageTransition";
 import { usePiAuth } from "@/components/providers/PiAuthProvider";
 import {
   profileQueryOptions,
+  reviewsForUserQueryOptions,
   tasksByOwnerQueryOptions,
 } from "@/lib/supabase/queries";
 import { getAvatarUrl, type TaskWithOwner } from "@/lib/supabase/types";
+import { ReviewsList } from "@/components/common/ReviewsList";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -35,6 +37,9 @@ function ProfilePage() {
   );
   const { data: ownTasks = [], isLoading: tasksLoading } = useQuery(
     tasksByOwnerQueryOptions(piUid),
+  );
+  const { data: reviewsData, isLoading: reviewsLoading } = useQuery(
+    reviewsForUserQueryOptions(piUid),
   );
 
   // Promote bare TaskRow → TaskWithOwner shape for TaskCard.
@@ -74,7 +79,9 @@ function ProfilePage() {
   const displayName =
     profile?.display_name || profile?.username || session.user.username;
   const avatarSeed = profile?.avatar_seed || session.user.username;
-  const rating = Number(profile?.rating ?? 0).toFixed(1);
+  const reviewsCount = reviewsData?.count ?? 0;
+  const reviewAverage = reviewsData?.average ?? Number(profile?.rating ?? 0);
+  const rating = Number(reviewAverage).toFixed(1);
   const completed = profile?.completed_tasks ?? 0;
   const published = profile?.published_tasks ?? ownTasks.length;
 
@@ -96,6 +103,9 @@ function ProfilePage() {
                   <div className="mt-1 flex items-center justify-center gap-1 text-sm md:justify-start">
                     <Star className="size-4 fill-yellow-400 text-yellow-400" />
                     <span className="font-semibold">{rating}</span>
+                    <span className="text-muted-foreground">
+                      ({reviewsCount} {t("profile.reviewsCount")})
+                    </span>
                     <Badge variant="secondary" className="ms-2 rounded-full">
                       <Award className="me-1 size-3" /> Pro
                     </Badge>
@@ -150,7 +160,15 @@ function ProfilePage() {
             <EmptyMsg icon={MessageSquare} text={t("profile.emptyOffers")} />
           </TabsContent>
           <TabsContent value="reviews" className="mt-6">
-            <EmptyMsg icon={Star} text={t("profile.emptyReviews")} />
+            {reviewsLoading ? (
+              <div className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
+                <Loader2 className="size-5 animate-spin" />
+              </div>
+            ) : !reviewsData || reviewsData.reviews.length === 0 ? (
+              <EmptyMsg icon={Star} text={t("profile.emptyReviews")} />
+            ) : (
+              <ReviewsList reviews={reviewsData.reviews} />
+            )}
           </TabsContent>
         </Tabs>
       </div>

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowLeft, MapPin, Clock, Users, Wallet, Star, CheckCircle2, Inbox, Loader2, MessageCircle } from "lucide-react";
+import { ArrowLeft, MapPin, Clock, Users, Wallet, Star, CheckCircle2, Inbox, Loader2, MessageCircle, Flag } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,12 +31,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { PageTransition } from "@/components/layout/PageTransition";
-import { bidsForTaskQueryOptions, conversationsQueryOptions, taskQueryOptions } from "@/lib/supabase/queries";
+import { bidsForTaskQueryOptions, conversationsQueryOptions, reviewsForTaskQueryOptions, taskQueryOptions } from "@/lib/supabase/queries";
 import { getAvatarUrl, getTaskImage } from "@/lib/supabase/types";
 import type { BidWithBidder, ConversationWithDetails } from "@/lib/supabase/types";
 import { isRtl } from "@/lib/i18n/config";
 import { fireConfetti } from "@/lib/confetti";
 import { usePiAuth } from "@/components/providers/PiAuthProvider";
+import { ReviewForm } from "@/components/common/ReviewForm";
+import { ReviewsList } from "@/components/common/ReviewsList";
 
 export const Route = createFileRoute("/tasks/$taskId")({
   loader: async ({ params, context: { queryClient } }) => {
@@ -108,6 +110,13 @@ function TaskDetail() {
     isLoggedIn &&
     task.status === "in_progress" &&
     (isOwner || isAssignee);
+  const isCompleted = task.status === "completed";
+  const canReview = isLoggedIn && isCompleted && (isOwner || isAssignee);
+  const otherPartyUid = isOwner
+    ? task.assignee_pi_uid
+    : isAssignee
+      ? task.owner_pi_uid
+      : null;
 
   // Find the conversation tied to this task (only loaded when relevant).
   const { data: conversations = [] } = useQuery({
@@ -221,6 +230,15 @@ function TaskDetail() {
             {isOwner && (
               <BidsSection taskId={task.id} taskStatus={task.status} accessToken={session!.accessToken} />
             )}
+
+            {/* Reviews section — visible to participants of completed tasks */}
+            {canReview && otherPartyUid && (
+              <ReviewSection
+                taskId={task.id}
+                accessToken={session!.accessToken}
+                revieweePiUid={otherPartyUid}
+              />
+            )}
           </div>
 
           {/* Sidebar — publisher + apply */}
@@ -245,6 +263,11 @@ function TaskDetail() {
             <div className="glass-card rounded-3xl p-3 text-center text-sm">
               <span className="text-muted-foreground">{t("task.taskStatus." + task.status)}</span>
             </div>
+
+            {/* Complete-task button — owner-only, in_progress only */}
+            {isLoggedIn && isOwner && task.status === "in_progress" && (
+              <CompleteTaskButton taskId={task.id} accessToken={session!.accessToken} />
+            )}
 
             {/* Chat button (in_progress only, owner or assignee) */}
             {canChat && (
@@ -381,6 +404,129 @@ function Stat({
       <Icon className="size-5 text-primary" />
       <p className="text-[11px] text-muted-foreground">{label}</p>
       <p className="text-sm font-bold">{value}</p>
+    </div>
+  );
+}
+
+// ---------- Complete-task button (owner-only) ----------
+
+function CompleteTaskButton({
+  taskId,
+  accessToken,
+}: {
+  taskId: string;
+  accessToken: string;
+}) {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  const complete = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/public/tasks-complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accessToken, taskId }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Failed (${res.status})`);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      fireConfetti();
+      toast.success(t("task.completeSuccess"));
+      queryClient.invalidateQueries({ queryKey: ["tasks", taskId] });
+      router.invalidate();
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          size="lg"
+          variant="outline"
+          disabled={complete.isPending}
+          className="w-full rounded-full"
+        >
+          {complete.isPending ? (
+            <>
+              <Loader2 className="me-2 size-4 animate-spin" />
+              {t("task.completing")}
+            </>
+          ) : (
+            <>
+              <Flag className="me-2 size-4" />
+              {t("task.completeTask")}
+            </>
+          )}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent className="glass-card border-0">
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t("task.completeConfirmTitle")}</AlertDialogTitle>
+          <AlertDialogDescription>{t("task.completeConfirmDesc")}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel className="rounded-full">{t("common.cancel")}</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => complete.mutate()}
+            className="rounded-full gradient-brand text-white"
+          >
+            {t("task.completeTask")}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+// ---------- Review section ----------
+
+function ReviewSection({
+  taskId,
+  accessToken,
+  revieweePiUid,
+}: {
+  taskId: string;
+  accessToken: string;
+  revieweePiUid: string;
+}) {
+  const { t } = useTranslation();
+  const { data, isLoading } = useQuery(
+    reviewsForTaskQueryOptions(taskId, accessToken),
+  );
+
+  return (
+    <div className="glass-card rounded-3xl p-6">
+      <div className="mb-4">
+        <h2 className="text-lg font-bold gradient-text">{t("review.sectionTitle")}</h2>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-6 text-sm text-muted-foreground">
+          <Loader2 className="me-2 size-4 animate-spin" />
+        </div>
+      ) : data?.myReviewSubmitted ? (
+        <p className="rounded-2xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-300">
+          {t("review.alreadyReviewed")}
+        </p>
+      ) : (
+        <ReviewForm
+          taskId={taskId}
+          accessToken={accessToken}
+          revieweePiUid={revieweePiUid}
+        />
+      )}
+
+      {data && data.reviews.length > 0 && (
+        <div className="mt-6 border-t border-border/50 pt-4">
+          <ReviewsList reviews={data.reviews} />
+        </div>
+      )}
     </div>
   );
 }
