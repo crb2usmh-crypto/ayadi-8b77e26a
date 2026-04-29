@@ -86,6 +86,11 @@
     "acceptSuccess": "Offer accepted successfully 🎉",
     "openChat": "Message",
     "chatNotReady": "Conversation is being set up...",
+    "completeTask": "Complete task",
+    "completing": "Completing...",
+    "completeConfirmTitle": "Complete this task?",
+    "completeConfirmDesc": "Once completed, both parties can review each other. This cannot be undone.",
+    "completeSuccess": "Task completed ✅",
     "bidStatus": {
       "pending": "Pending",
       "accepted": "Accepted",
@@ -128,7 +133,8 @@
     },
     "emptyTasks": "You haven't posted any task yet",
     "emptyOffers": "You haven't submitted any offer yet",
-    "emptyReviews": "No reviews yet"
+    "emptyReviews": "No reviews yet",
+    "reviewsCount": "reviews"
   },
   "messages": {
     "title": "Conversations",
@@ -159,5 +165,17 @@
     "piReason3": "A seamless experience — no extra accounts or passwords.",
     "openInPi": "Open in Pi Browser",
     "piHelpText": "Don't have Pi Browser yet? Download it from your app store and sign in with your Pi account."
+  },
+  "review": {
+    "title": "Review",
+    "rateOther": "How do you rate your experience with the other party?",
+    "placeholder": "Share your thoughts (optional)...",
+    "submit": "Submit review",
+    "submitting": "Submitting...",
+    "thanks": "Thanks, your review was submitted ⭐",
+    "alreadyReviewed": "You already submitted your review. Thanks!",
+    "noReviews": "No reviews on this task yet",
+    "ratingRequired": "Pick a star rating first",
+    "sectionTitle": "Task review"
   }
 }
