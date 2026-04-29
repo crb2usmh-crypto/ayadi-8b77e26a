@@ -6,6 +6,7 @@ import type {
   MessageRow,
   NotificationRow,
   ProfileRow,
+  ReviewWithReviewer,
   TaskCategory,
   TaskRow,
   TaskWithOwner,
@@ -243,6 +244,73 @@ export const conversationBundleQueryOptions = (
         : Promise.resolve({ conversation: null, messages: [] }),
     enabled: !!accessToken,
     staleTime: 0,
+  });
+
+// ---------- Reviews -------------------------------------------------
+
+async function fetchReviewsForUser(piUid: string): Promise<{
+  reviews: ReviewWithReviewer[];
+  average: number;
+  count: number;
+}> {
+  const res = await fetch("/api/public/reviews-list", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ revieweePiUid: piUid, limit: 20 }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Failed to load reviews (${res.status})`);
+  }
+  return (await res.json()) as {
+    reviews: ReviewWithReviewer[];
+    average: number;
+    count: number;
+  };
+}
+
+export const reviewsForUserQueryOptions = (piUid: string | null | undefined) =>
+  queryOptions({
+    queryKey: ["reviews", "byUser", piUid ?? "anon"],
+    queryFn: () =>
+      piUid
+        ? fetchReviewsForUser(piUid)
+        : Promise.resolve({ reviews: [], average: 0, count: 0 }),
+    enabled: !!piUid,
+    staleTime: 30_000,
+  });
+
+async function fetchReviewsForTask(
+  taskId: string,
+  accessToken: string,
+): Promise<{ reviews: ReviewWithReviewer[]; myReviewSubmitted: boolean }> {
+  const res = await fetch("/api/public/reviews-for-task", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ accessToken, taskId }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Failed to load reviews (${res.status})`);
+  }
+  return (await res.json()) as {
+    reviews: ReviewWithReviewer[];
+    myReviewSubmitted: boolean;
+  };
+}
+
+export const reviewsForTaskQueryOptions = (
+  taskId: string,
+  accessToken: string | null | undefined,
+) =>
+  queryOptions({
+    queryKey: ["reviews", "byTask", taskId, accessToken ? "auth" : "anon"],
+    queryFn: () =>
+      accessToken
+        ? fetchReviewsForTask(taskId, accessToken)
+        : Promise.resolve({ reviews: [], myReviewSubmitted: false }),
+    enabled: !!accessToken,
+    staleTime: 15_000,
   });
 
 // ---------- Helpers --------------------------------------------------

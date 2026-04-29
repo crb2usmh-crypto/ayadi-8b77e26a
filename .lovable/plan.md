@@ -1,109 +1,171 @@
-# خطة بناء نظام المراسلة الفورية
+## الخطة: نظام التقييم في "أيادي"
 
-البنية التحتية موجودة بالفعل:
-- جداول `conversations` و `messages` + علاقتها بـ `bids` و `tasks`
-- `bids-accept` ينشئ المحادثة تلقائياً عند قبول العرض
-- `conversations-list`, `messages-send` (server routes) جاهزة
-- `conversationsQueryOptions`, `messagesQueryOptions` في `queries.ts`
-- `useRealtimeMessages` hook في `src/lib/supabase/realtime.ts`
-
-الناقص: الصفحات تعرض **mockData** بدل البيانات الحقيقية، لا يوجد زر "مراسلة" في صفحة المهمة، ولم يتم التحقق من تفعيل Realtime على جدول `messages` في قاعدة البيانات.
+ملاحظة مهمة: المهام حاليًا تنتقل من `open` → `in_progress` فقط (عبر قبول العرض). لا يوجد إجراء يحوّل المهمة إلى `completed`. بدون ذلك، شرط ظهور قسم التقييم لن يتحقق أبدًا. لذلك أُضيف خطوة "إنهاء المهمة" قبل خطوة التقييم.
 
 ---
 
-## 1. تحديث `src/routes/messages.tsx` (قائمة المحادثات الحقيقية)
+### 1) قاعدة البيانات (Migration)
 
-- إزالة `mockConversations`؛ استخدام `useSuspenseQuery(conversationsQueryOptions(session?.accessToken))`.
-- متطلب تسجيل الدخول: إذا لم يكن المستخدم مسجلاً، عرض شاشة "سجّل دخول لرؤية محادثاتك".
-- لكل محادثة: عرض اسم الطرف الآخر (إذا كنت `owner` اعرض `bidder`، والعكس)، صورة المهمة، وقت آخر رسالة، وعنوان المهمة.
-- إبقاء التخطيط الحالي (قائمة جانبية + Outlet) كما هو.
+إنشاء جدول `reviews`:
 
-## 2. تحديث `src/routes/messages.$conversationId.tsx` (غرفة الدردشة الحقيقية)
-
-- استبدال `mockMessages` بـ:
-  - `conversationQueryOptions(conversationId)` لتفاصيل المحادثة (المالك، المُقدِّم، المهمة)
-  - `messagesQueryOptions(conversationId)` لقائمة الرسائل
-- استدعاء `useRealtimeMessages(conversationId)` للاشتراك في رسائل INSERT الجديدة وتحديث الكاش فورياً.
-- التمييز بين المرسل والمستقبل عبر مقارنة `msg.sender_pi_uid === session.user.uid`:
-  - المرسل (أنا): محاذاة لليمين (في RTL) + خلفية `gradient-brand` بيضاء
-  - المستقبل: محاذاة لليسار + `glass-card`
-- الإرسال عبر `useMutation` يستدعي `POST /api/public/messages-send` مع `{ accessToken, conversationId, body }` ثم تحديث الكاش تفاؤلياً.
-- التحقق من أن المستخدم الحالي طرف في المحادثة (`owner_pi_uid` أو `bidder_pi_uid`)، وإلا عرض رسالة "غير مصرح".
-- في الـ header: عرض اسم الطرف الآخر + رابط للمهمة المرتبطة.
-
-## 3. تحديث `src/routes/messages.index.tsx` (الشاشة الفارغة)
-
-- إبقائها كما هي (شاشة "اختر محادثة"). تأكد فقط من النصوص العربية/الإنجليزية.
-
-## 4. زر "مراسلة" في `src/routes/tasks.$taskId.tsx`
-
-- إضافة `useQuery` لجلب `conversations-list` والبحث عن المحادثة حيث `task_id === task.id`.
-- شرط الإظهار: `task.status === "in_progress"` و (المستخدم هو `owner_pi_uid` أو `assignee_pi_uid`).
-- زر `Link to="/messages/$conversationId"` بأيقونة `MessageCircle` يظهر في الشريط الجانبي تحت بطاقة الحالة.
-- إضافة المفاتيح: `task.openChat` / `task.chatNotReady`.
-
-## 5. تأمين قراءة الرسائل (مهم — RLS)
-
-النموذج الحالي للمصادقة هو **Pi Network**، وليس Supabase Auth — لذلك `auth.uid()` يساوي دائماً `null` في RLS. خياران:
-
-**الخيار المُختار (أ): قراءة عبر Server Routes**
-
-سأنشئ مسارين جديدين بدل القراءة المباشرة من المتصفح:
-- `POST /api/public/messages-list` → `{ accessToken, conversationId }` يتحقق من أن `me.uid` ضمن `(owner_pi_uid, bidder_pi_uid)` ثم يعيد الرسائل.
-- (موجود) `conversations-list` يعمل بالفعل.
-
-ثم تحديث `messagesQueryOptions` و `conversationQueryOptions` لتمرير `accessToken` واستدعاء الـ server routes.
-
-ثم سياسات RLS النهائية على `messages` و `conversations`:
 ```sql
--- منع القراءة المباشرة من العميل (الـ anon key)
-revoke select on public.messages from anon, authenticated;
-revoke select on public.conversations from anon, authenticated;
--- service_role (المستخدم في server routes) يتجاوز RLS تلقائياً
--- منع كل INSERT/UPDATE/DELETE من العميل (الكتابة من السيرفر فقط)
-alter table public.messages enable row level security;
-alter table public.conversations enable row level security;
--- لا توجد سياسات SELECT/INSERT للـ anon → كل شيء مرفوض ما لم يأتِ من service_role
+create table public.reviews (
+  id uuid primary key default gen_random_uuid(),
+  task_id uuid not null references public.tasks(id) on delete cascade,
+  reviewer_pi_uid text not null,
+  reviewee_pi_uid text not null,
+  rating smallint not null check (rating between 1 and 5),
+  comment text check (char_length(comment) <= 1000),
+  created_at timestamptz not null default now(),
+  unique (task_id, reviewer_pi_uid)  -- كل مستخدم يقيّم مرة واحدة لكل مهمة
+);
+
+create index reviews_reviewee_idx on public.reviews(reviewee_pi_uid, created_at desc);
+create index reviews_task_idx on public.reviews(task_id);
+
+alter table public.reviews enable row level security;
+
+-- قراءة عامة (متوافق مع نمط profiles/tasks الحالي)
+create policy "reviews_select_all" on public.reviews
+  for select to anon, authenticated using (true);
+
+-- الكتابة: عبر service-role فقط من خلال /api/public/reviews-create
+-- (المصادقة هي Pi Network وليست Supabase auth، لذلك لا توجد سياسة insert للعميل)
 ```
 
-## 6. تفعيل Realtime على `messages`
+ملاحظة: الكتابة تتم حصرًا من خادم TanStack باستخدام service-role بعد التحقق من Pi access token — تمامًا كما تعمل bids/messages/notifications.
 
-- إضافة جدول `messages` إلى publication الخاص بـ Realtime (`supabase_realtime`).
-- مهم: Realtime يحترم RLS — وبما أننا منعنا قراءة `messages` من `anon`، لن يستقبل العميل الأحداث.
-- الحل: إنشاء سياسة SELECT خاصة بـ Realtime تسمح للجميع بقراءة `messages` **فقط عبر قناة Realtime** غير ممكن مباشرة. لذلك سنسمح بـ SELECT من `anon` على `messages` مع تقييد الصفوف المرئية:
-  - الصفوف لا تحتوي على بيانات حساسة (نص الرسالة + `sender_pi_uid` + `conversation_id`).
-  - بما أن `pi_uid` غير قابل للتخمين عشوائياً وأن قائمة المحادثات لا تُكشف، يبقى الكشف محدوداً.
-  - **بديل أفضل وأكثر أماناً (سأطبقه)**: ترك Realtime مع سياسة SELECT تسمح بالقراءة، لكن إخفاء `conversations` (لا أحد يعرف معرّف المحادثة دون المرور عبر `conversations-list`)، مع توثيق هذا القرار.
-
-السياسات النهائية:
-```sql
-alter publication supabase_realtime add table public.messages;
--- اقرأ المحادثات والرسائل فقط من خلال server routes
-revoke select on public.conversations from anon, authenticated;
--- messages: نسمح بالقراءة (مطلوب لـ Realtime على anon key) لكن المعرّفات سرية
--- INSERT دائماً من service_role فقط (revoke insert from anon)
-revoke insert, update, delete on public.messages from anon, authenticated;
-revoke insert, update, delete on public.conversations from anon, authenticated;
-```
-
-سأطلب من المستخدم تنفيذ migration بهذه الأوامر.
-
-## 7. الترجمات
-
-إضافة لـ `ar.json` و `en.json`:
-- `messages.loginRequired`, `messages.empty`, `messages.unauthorized`
-- `task.openChat`, `task.chatNotReady`
-
-## 8. ملاحظات أمان
-
-- كل عمليات الكتابة (`messages-send`) تتحقق من Pi token + كون المستخدم طرفاً.
-- كل عمليات القراءة المهمة (`conversations-list`, `messages-list`) تمر بنفس التحقق.
-- لا يتم كشف `pi_uid` لمستخدمين خارج المحادثة.
+تحديث متوسط التقييم على `profiles.rating` بعد كل تقييم جديد عبر استعلام جانب الخادم (اختيار: تحديث مباشر من API بعد الإدراج، بدون تريغرات DB حفاظًا على البساطة).
 
 ---
 
-**ملفات سيتم تعديلها:** `src/routes/messages.tsx`, `src/routes/messages.$conversationId.tsx`, `src/routes/tasks.$taskId.tsx`, `src/lib/supabase/queries.ts`, `src/lib/i18n/locales/ar.json`, `src/lib/i18n/locales/en.json`
+### 2) إنهاء المهمة (متطلب مسبق للتقييم)
 
-**ملفات سيتم إنشاؤها:** `src/routes/api.public.messages-list.ts`
+**Endpoint جديد**: `src/routes/api.public.tasks-complete.ts`
+- Body: `{ accessToken, taskId }`
+- شروط: المتصل = صاحب المهمة، الحالة الحالية = `in_progress`.
+- التأثير: `tasks.status = "completed"` + إشعار للمنفذ + زيادة `profiles.completed_tasks` للمنفذ.
 
-**Migration مطلوب:** تفعيل Realtime + سياسات RLS الموصوفة أعلاه.
+**واجهة**: في `src/routes/tasks.$taskId.tsx`، إذا كانت `status === "in_progress"` و`isOwner`، إظهار زر "إنهاء المهمة" (مع AlertDialog للتأكيد).
+
+---
+
+### 3) Endpoints التقييم
+
+**`src/routes/api.public.reviews-create.ts`** (POST)
+- Body: `{ accessToken, taskId, rating (1-5), comment? }`
+- تحقّق:
+  - المهمة موجودة وحالتها `completed`.
+  - المتصل إما `owner_pi_uid` أو `assignee_pi_uid` للمهمة.
+  - `reviewee` يُحدد تلقائيًا = الطرف الآخر.
+  - `unique(task_id, reviewer_pi_uid)` يمنع التكرار (نُرجع 409 إذا حدث).
+- بعد الإدراج: حساب متوسط جديد لـ `reviewee` وتحديث `profiles.rating`.
+- إرسال إشعار للمُقيَّم.
+
+**`src/routes/api.public.reviews-list.ts`** (POST)
+- Body: `{ revieweePiUid, limit? }` — قراءة عامة، لا تتطلب مصادقة.
+- يُرجع قائمة `ReviewWithReviewer[]` (آخر N، افتراضي 10) + `average` + `count`.
+
+**`src/routes/api.public.reviews-for-task.ts`** (POST)
+- Body: `{ accessToken, taskId }` — يُرجع المراجعات على هذه المهمة + علم `myReviewSubmitted` لتحديد ما إذا كان المتصل قد قيّم بالفعل.
+
+---
+
+### 4) الأنواع والاستعلامات (Frontend)
+
+**`src/lib/supabase/types.ts`**: إضافة
+```ts
+export interface ReviewRow { id; task_id; reviewer_pi_uid; reviewee_pi_uid; rating; comment; created_at; }
+export interface ReviewWithReviewer extends ReviewRow { reviewer: ProfileRow | null; }
+```
+
+**`src/lib/supabase/queries.ts`**: إضافة
+- `reviewsForUserQueryOptions(piUid)` — يستدعي `/api/public/reviews-list`.
+- `reviewsForTaskQueryOptions(taskId, accessToken)` — يستدعي `/api/public/reviews-for-task`.
+
+---
+
+### 5) مكوّن التقييم التفاعلي
+
+**`src/components/common/StarRating.tsx`** (جديد):
+- Props: `value, onChange?, size?, readonly?`.
+- 5 أيقونات `Star` من lucide-react مع hover state و aria-labels.
+- يدعم RTL.
+
+**`src/components/common/ReviewForm.tsx`** (جديد):
+- يستخدم `StarRating` + `Textarea` للتعليق + زر إرسال.
+- يستدعي `/api/public/reviews-create` عبر `useMutation`.
+- بعد النجاح: confetti + toast + invalidate queries.
+
+**`src/components/common/ReviewsList.tsx`** (جديد):
+- يعرض avatar + اسم المُقيِّم + النجوم + التعليق + التاريخ.
+
+---
+
+### 6) دمج في صفحة المهمة `tasks.$taskId.tsx`
+
+داخل العمود الرئيسي (md:col-span-2)، إضافة `<ReviewSection />` يظهر فقط إذا:
+- `task.status === "completed"` و
+- المتصل = owner أو assignee.
+
+السلوك:
+- تحميل `reviewsForTaskQueryOptions`.
+- إذا `myReviewSubmitted === false` → عرض `<ReviewForm taskId={task.id} revieweePiUid={otherParty} />`.
+- إذا `true` → عرض رسالة "شكرًا، تم إرسال تقييمك".
+- أسفل ذلك: عرض المراجعات المُقدَّمة على هذه المهمة (إن وُجدت).
+
+كذلك إضافة زر "إنهاء المهمة" في sidebar (إذا `isOwner && status === "in_progress"`).
+
+---
+
+### 7) دمج في صفحة الملف الشخصي `profile.tsx`
+
+- استبدال `rating` المعروض حاليًا (الذي يأتي من `profiles.rating`) بقيمة محسوبة من `reviewsForUserQueryOptions(piUid)` (`average` + `count`).
+- عرض عدد المراجعات بجانب المتوسط: مثلًا "4.7 ★ (12 تقييم)".
+- في تبويب `reviews` (موجود لكنه فارغ حاليًا): عرض `<ReviewsList reviews={reviews} />` بدلًا من `EmptyMsg`.
+
+---
+
+### 8) ترجمات
+
+إضافة مفاتيح في `src/lib/i18n/locales/ar.json` و`en.json`:
+- `task.completeTask`, `task.completeConfirmTitle/Desc`, `task.completed`.
+- `review.title`, `review.rateOther`, `review.placeholder`, `review.submit`, `review.submitting`, `review.thanks`, `review.alreadyReviewed`, `review.noReviews`, `review.ratingRequired`, `review.count`.
+
+---
+
+### الملفات المتأثرة
+
+**جديدة:**
+- migration: `supabase/migrations/<timestamp>_reviews.sql`
+- `src/routes/api.public.tasks-complete.ts`
+- `src/routes/api.public.reviews-create.ts`
+- `src/routes/api.public.reviews-list.ts`
+- `src/routes/api.public.reviews-for-task.ts`
+- `src/components/common/StarRating.tsx`
+- `src/components/common/ReviewForm.tsx`
+- `src/components/common/ReviewsList.tsx`
+
+**معدّلة:**
+- `src/lib/supabase/types.ts`
+- `src/lib/supabase/queries.ts`
+- `src/routes/tasks.$taskId.tsx`
+- `src/routes/profile.tsx`
+- `src/lib/i18n/locales/{ar,en}.json`
+
+---
+
+### تفاصيل أمنية
+
+- جميع عمليات الكتابة تمر عبر endpoints تتحقق من Pi access token عبر `verifyPiToken` (نفس النمط الحالي).
+- `unique(task_id, reviewer_pi_uid)` يمنع تكرار التقييمات على مستوى DB.
+- `rating` مقيّد بين 1-5 على مستوى DB (`check`).
+- `comment` محدود بـ 1000 حرف.
+- RLS: قراءة عامة فقط، الكتابة عبر service-role من الخادم — لا يوجد منفذ كتابة من المتصفح مباشرة.
+- يتم التأكد من أن المُقيِّم طرف فعلي في المهمة (owner أو assignee) قبل القبول.
+
+---
+
+### ملاحظة للمستخدم
+
+سأقوم بإنشاء migration للجدول الجديد، وستحتاج للموافقة على تشغيله عند طلب ذلك. باقي التغييرات (الكود) ستُطبَّق تلقائيًا بعد موافقتك على هذه الخطة.

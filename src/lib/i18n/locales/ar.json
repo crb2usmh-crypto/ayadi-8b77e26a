@@ -86,6 +86,11 @@
     "acceptSuccess": "تم قبول العرض بنجاح 🎉",
     "openChat": "مراسلة",
     "chatNotReady": "المحادثة قيد التحضير...",
+    "completeTask": "إنهاء المهمة",
+    "completing": "جارٍ الإنهاء...",
+    "completeConfirmTitle": "إنهاء المهمة؟",
+    "completeConfirmDesc": "بعد الإنهاء يمكن لكِلا الطرفين تقييم بعضهما البعض. لا يمكن التراجع.",
+    "completeSuccess": "تم إنهاء المهمة ✅",
     "bidStatus": {
       "pending": "قيد المراجعة",
       "accepted": "مقبول",
@@ -128,7 +133,8 @@
     },
     "emptyTasks": "لم تنشر أي مهمة بعد",
     "emptyOffers": "لم تقدم أي عرض بعد",
-    "emptyReviews": "لا توجد تقييمات بعد"
+    "emptyReviews": "لا توجد تقييمات بعد",
+    "reviewsCount": "تقييم"
   },
   "messages": {
     "title": "المحادثات",
@@ -159,5 +165,17 @@
     "piReason3": "تجربة سلسة بدون إنشاء حسابات أو كلمات مرور إضافية.",
     "openInPi": "افتح في Pi Browser",
     "piHelpText": "إذا لم يكن لديك Pi Browser، حمّله من متجر التطبيقات وسجّل دخولك بحساب Pi."
+  },
+  "review": {
+    "title": "التقييم",
+    "rateOther": "كم تقيّم تجربتك مع الطرف الآخر؟",
+    "placeholder": "اكتب رأيك (اختياري)...",
+    "submit": "إرسال التقييم",
+    "submitting": "جارٍ الإرسال...",
+    "thanks": "شكرًا، تم إرسال تقييمك ⭐",
+    "alreadyReviewed": "لقد أرسلت تقييمك مسبقًا. شكرًا!",
+    "noReviews": "لا توجد تقييمات على هذه المهمة بعد",
+    "ratingRequired": "اختر عدد النجوم أولاً",
+    "sectionTitle": "تقييم المهمة"
   }
 }

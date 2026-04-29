@@ -21,6 +21,10 @@ import { Route as TasksTaskIdRouteImport } from './routes/tasks.$taskId'
 import { Route as MessagesConversationIdRouteImport } from './routes/messages.$conversationId'
 import { Route as ApiPublicValidationKeyRouteImport } from './routes/api.public.validation-key'
 import { Route as ApiPublicTasksCreateRouteImport } from './routes/api.public.tasks-create'
+import { Route as ApiPublicTasksCompleteRouteImport } from './routes/api.public.tasks-complete'
+import { Route as ApiPublicReviewsListRouteImport } from './routes/api.public.reviews-list'
+import { Route as ApiPublicReviewsForTaskRouteImport } from './routes/api.public.reviews-for-task'
+import { Route as ApiPublicReviewsCreateRouteImport } from './routes/api.public.reviews-create'
 import { Route as ApiPublicPiVerifyRouteImport } from './routes/api.public.pi-verify'
 import { Route as ApiPublicNotificationsRouteImport } from './routes/api.public.notifications'
 import { Route as ApiPublicMessagesSendRouteImport } from './routes/api.public.messages-send'
@@ -90,6 +94,26 @@ const ApiPublicTasksCreateRoute = ApiPublicTasksCreateRouteImport.update({
   path: '/api/public/tasks-create',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTasksCompleteRoute = ApiPublicTasksCompleteRouteImport.update({
+  id: '/api/public/tasks-complete',
+  path: '/api/public/tasks-complete',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicReviewsListRoute = ApiPublicReviewsListRouteImport.update({
+  id: '/api/public/reviews-list',
+  path: '/api/public/reviews-list',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicReviewsForTaskRoute = ApiPublicReviewsForTaskRouteImport.update({
+  id: '/api/public/reviews-for-task',
+  path: '/api/public/reviews-for-task',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicReviewsCreateRoute = ApiPublicReviewsCreateRouteImport.update({
+  id: '/api/public/reviews-create',
+  path: '/api/public/reviews-create',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPiVerifyRoute = ApiPublicPiVerifyRouteImport.update({
   id: '/api/public/pi-verify',
   path: '/api/public/pi-verify',
@@ -151,6 +175,10 @@ export interface FileRoutesByFullPath {
   '/api/public/messages-send': typeof ApiPublicMessagesSendRoute
   '/api/public/notifications': typeof ApiPublicNotificationsRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
+  '/api/public/reviews-create': typeof ApiPublicReviewsCreateRoute
+  '/api/public/reviews-for-task': typeof ApiPublicReviewsForTaskRoute
+  '/api/public/reviews-list': typeof ApiPublicReviewsListRoute
+  '/api/public/tasks-complete': typeof ApiPublicTasksCompleteRoute
   '/api/public/tasks-create': typeof ApiPublicTasksCreateRoute
   '/api/public/validation-key': typeof ApiPublicValidationKeyRoute
 }
@@ -172,6 +200,10 @@ export interface FileRoutesByTo {
   '/api/public/messages-send': typeof ApiPublicMessagesSendRoute
   '/api/public/notifications': typeof ApiPublicNotificationsRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
+  '/api/public/reviews-create': typeof ApiPublicReviewsCreateRoute
+  '/api/public/reviews-for-task': typeof ApiPublicReviewsForTaskRoute
+  '/api/public/reviews-list': typeof ApiPublicReviewsListRoute
+  '/api/public/tasks-complete': typeof ApiPublicTasksCompleteRoute
   '/api/public/tasks-create': typeof ApiPublicTasksCreateRoute
   '/api/public/validation-key': typeof ApiPublicValidationKeyRoute
 }
@@ -195,6 +227,10 @@ export interface FileRoutesById {
   '/api/public/messages-send': typeof ApiPublicMessagesSendRoute
   '/api/public/notifications': typeof ApiPublicNotificationsRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
+  '/api/public/reviews-create': typeof ApiPublicReviewsCreateRoute
+  '/api/public/reviews-for-task': typeof ApiPublicReviewsForTaskRoute
+  '/api/public/reviews-list': typeof ApiPublicReviewsListRoute
+  '/api/public/tasks-complete': typeof ApiPublicTasksCompleteRoute
   '/api/public/tasks-create': typeof ApiPublicTasksCreateRoute
   '/api/public/validation-key': typeof ApiPublicValidationKeyRoute
 }
@@ -219,6 +255,10 @@ export interface FileRouteTypes {
     | '/api/public/messages-send'
     | '/api/public/notifications'
     | '/api/public/pi-verify'
+    | '/api/public/reviews-create'
+    | '/api/public/reviews-for-task'
+    | '/api/public/reviews-list'
+    | '/api/public/tasks-complete'
     | '/api/public/tasks-create'
     | '/api/public/validation-key'
   fileRoutesByTo: FileRoutesByTo
@@ -240,6 +280,10 @@ export interface FileRouteTypes {
     | '/api/public/messages-send'
     | '/api/public/notifications'
     | '/api/public/pi-verify'
+    | '/api/public/reviews-create'
+    | '/api/public/reviews-for-task'
+    | '/api/public/reviews-list'
+    | '/api/public/tasks-complete'
     | '/api/public/tasks-create'
     | '/api/public/validation-key'
   id:
@@ -262,6 +306,10 @@ export interface FileRouteTypes {
     | '/api/public/messages-send'
     | '/api/public/notifications'
     | '/api/public/pi-verify'
+    | '/api/public/reviews-create'
+    | '/api/public/reviews-for-task'
+    | '/api/public/reviews-list'
+    | '/api/public/tasks-complete'
     | '/api/public/tasks-create'
     | '/api/public/validation-key'
   fileRoutesById: FileRoutesById
@@ -283,6 +331,10 @@ export interface RootRouteChildren {
   ApiPublicMessagesSendRoute: typeof ApiPublicMessagesSendRoute
   ApiPublicNotificationsRoute: typeof ApiPublicNotificationsRoute
   ApiPublicPiVerifyRoute: typeof ApiPublicPiVerifyRoute
+  ApiPublicReviewsCreateRoute: typeof ApiPublicReviewsCreateRoute
+  ApiPublicReviewsForTaskRoute: typeof ApiPublicReviewsForTaskRoute
+  ApiPublicReviewsListRoute: typeof ApiPublicReviewsListRoute
+  ApiPublicTasksCompleteRoute: typeof ApiPublicTasksCompleteRoute
   ApiPublicTasksCreateRoute: typeof ApiPublicTasksCreateRoute
   ApiPublicValidationKeyRoute: typeof ApiPublicValidationKeyRoute
 }
@@ -371,6 +423,34 @@ declare module '@tanstack/react-router' {
       path: '/api/public/tasks-create'
       fullPath: '/api/public/tasks-create'
       preLoaderRoute: typeof ApiPublicTasksCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/tasks-complete': {
+      id: '/api/public/tasks-complete'
+      path: '/api/public/tasks-complete'
+      fullPath: '/api/public/tasks-complete'
+      preLoaderRoute: typeof ApiPublicTasksCompleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/reviews-list': {
+      id: '/api/public/reviews-list'
+      path: '/api/public/reviews-list'
+      fullPath: '/api/public/reviews-list'
+      preLoaderRoute: typeof ApiPublicReviewsListRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/reviews-for-task': {
+      id: '/api/public/reviews-for-task'
+      path: '/api/public/reviews-for-task'
+      fullPath: '/api/public/reviews-for-task'
+      preLoaderRoute: typeof ApiPublicReviewsForTaskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/reviews-create': {
+      id: '/api/public/reviews-create'
+      path: '/api/public/reviews-create'
+      fullPath: '/api/public/reviews-create'
+      preLoaderRoute: typeof ApiPublicReviewsCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/pi-verify': {
@@ -463,6 +543,10 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMessagesSendRoute: ApiPublicMessagesSendRoute,
   ApiPublicNotificationsRoute: ApiPublicNotificationsRoute,
   ApiPublicPiVerifyRoute: ApiPublicPiVerifyRoute,
+  ApiPublicReviewsCreateRoute: ApiPublicReviewsCreateRoute,
+  ApiPublicReviewsForTaskRoute: ApiPublicReviewsForTaskRoute,
+  ApiPublicReviewsListRoute: ApiPublicReviewsListRoute,
+  ApiPublicTasksCompleteRoute: ApiPublicTasksCompleteRoute,
   ApiPublicTasksCreateRoute: ApiPublicTasksCreateRoute,
   ApiPublicValidationKeyRoute: ApiPublicValidationKeyRoute,
 }

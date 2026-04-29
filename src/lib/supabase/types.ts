@@ -120,6 +120,23 @@ export interface MessageRow {
   created_at: string;
 }
 
+// ---------- Reviews ------------------------------------------------
+
+export interface ReviewRow {
+  id: string;
+  task_id: string;
+  reviewer_pi_uid: string;
+  reviewee_pi_uid: string;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+}
+
+/** A review joined with the reviewer's profile. */
+export interface ReviewWithReviewer extends ReviewRow {
+  reviewer: ProfileRow | null;
+}
+
 export const CATEGORY_KEYS: TaskCategory[] = [
   "design",
   "development",
