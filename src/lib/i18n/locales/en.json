@@ -177,5 +177,19 @@
     "noReviews": "No reviews on this task yet",
     "ratingRequired": "Pick a star rating first",
     "sectionTitle": "Task review"
+  },
+  "ayadi": {
+    "title": "Ayadi Balance",
+    "subtitle": "Mine Ayadi token every 24 hours",
+    "currentBalance": "Current balance",
+    "mineButton": "Mine Ayadi now",
+    "mineCooldown": "Available in {{time}}",
+    "nextIn": "Next mine in",
+    "rewardHint": "Earn {{amount}} AYADI every 24 hours",
+    "successToast": "🎉 Mined! +{{reward}} AYADI — balance is now {{balance}}",
+    "cooldownToast": "Not ready to mine yet",
+    "loginRequired": "Sign in with Pi to start mining Ayadi token",
+    "historyTitle": "Recent mining",
+    "historyEmpty": "No mining activity yet"
   }
 }
