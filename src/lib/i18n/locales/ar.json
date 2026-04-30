@@ -177,5 +177,19 @@
     "noReviews": "لا توجد تقييمات على هذه المهمة بعد",
     "ratingRequired": "اختر عدد النجوم أولاً",
     "sectionTitle": "تقييم المهمة"
+  },
+  "ayadi": {
+    "title": "رصيد أيادي",
+    "subtitle": "عدّن توكن أيادي كل 24 ساعة",
+    "currentBalance": "الرصيد الحالي",
+    "mineButton": "تعدين أيادي الآن",
+    "mineCooldown": "متاح بعد {{time}}",
+    "nextIn": "التعدين القادم خلال",
+    "rewardHint": "تحصل على {{amount}} AYADI كل 24 ساعة",
+    "successToast": "🎉 تم التعدين! +{{reward}} AYADI — رصيدك الآن {{balance}}",
+    "cooldownToast": "لم يحن وقت التعدين بعد",
+    "loginRequired": "سجّل دخولك بـ Pi لبدء تعدين توكن أيادي",
+    "historyTitle": "آخر عمليات التعدين",
+    "historyEmpty": "لم تقم بأي عملية تعدين بعد"
   }
 }
