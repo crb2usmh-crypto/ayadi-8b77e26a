@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ValidationKeyDottxtRouteImport } from './routes/validation-key[.]txt'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PostTaskRouteImport } from './routes/post-task'
 import { Route as MessagesRouteImport } from './routes/messages'
@@ -34,11 +33,6 @@ import { Route as ApiPublicBidsListRouteImport } from './routes/api.public.bids-
 import { Route as ApiPublicBidsCreateRouteImport } from './routes/api.public.bids-create'
 import { Route as ApiPublicBidsAcceptRouteImport } from './routes/api.public.bids-accept'
 
-const ValidationKeyDottxtRoute = ValidationKeyDottxtRouteImport.update({
-  id: '/validation-key.txt',
-  path: '/validation-key.txt',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -162,7 +156,6 @@ export interface FileRoutesByFullPath {
   '/messages': typeof MessagesRouteWithChildren
   '/post-task': typeof PostTaskRoute
   '/profile': typeof ProfileRoute
-  '/validation-key.txt': typeof ValidationKeyDottxtRoute
   '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/messages/': typeof MessagesIndexRoute
@@ -187,7 +180,6 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/post-task': typeof PostTaskRoute
   '/profile': typeof ProfileRoute
-  '/validation-key.txt': typeof ValidationKeyDottxtRoute
   '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/messages': typeof MessagesIndexRoute
@@ -214,7 +206,6 @@ export interface FileRoutesById {
   '/messages': typeof MessagesRouteWithChildren
   '/post-task': typeof PostTaskRoute
   '/profile': typeof ProfileRoute
-  '/validation-key.txt': typeof ValidationKeyDottxtRoute
   '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/messages/': typeof MessagesIndexRoute
@@ -242,7 +233,6 @@ export interface FileRouteTypes {
     | '/messages'
     | '/post-task'
     | '/profile'
-    | '/validation-key.txt'
     | '/messages/$conversationId'
     | '/tasks/$taskId'
     | '/messages/'
@@ -267,7 +257,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/post-task'
     | '/profile'
-    | '/validation-key.txt'
     | '/messages/$conversationId'
     | '/tasks/$taskId'
     | '/messages'
@@ -293,7 +282,6 @@ export interface FileRouteTypes {
     | '/messages'
     | '/post-task'
     | '/profile'
-    | '/validation-key.txt'
     | '/messages/$conversationId'
     | '/tasks/$taskId'
     | '/messages/'
@@ -320,7 +308,6 @@ export interface RootRouteChildren {
   MessagesRoute: typeof MessagesRouteWithChildren
   PostTaskRoute: typeof PostTaskRoute
   ProfileRoute: typeof ProfileRoute
-  ValidationKeyDottxtRoute: typeof ValidationKeyDottxtRoute
   TasksTaskIdRoute: typeof TasksTaskIdRoute
   TasksIndexRoute: typeof TasksIndexRoute
   ApiPublicBidsAcceptRoute: typeof ApiPublicBidsAcceptRoute
@@ -341,13 +328,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/validation-key.txt': {
-      id: '/validation-key.txt'
-      path: '/validation-key.txt'
-      fullPath: '/validation-key.txt'
-      preLoaderRoute: typeof ValidationKeyDottxtRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -532,7 +512,6 @@ const rootRouteChildren: RootRouteChildren = {
   MessagesRoute: MessagesRouteWithChildren,
   PostTaskRoute: PostTaskRoute,
   ProfileRoute: ProfileRoute,
-  ValidationKeyDottxtRoute: ValidationKeyDottxtRoute,
   TasksTaskIdRoute: TasksTaskIdRoute,
   TasksIndexRoute: TasksIndexRoute,
   ApiPublicBidsAcceptRoute: ApiPublicBidsAcceptRoute,
