@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { TaskCard } from "@/components/common/TaskCard";
 import { PageTransition } from "@/components/layout/PageTransition";
+import { AyadiMiner } from "@/components/common/AyadiMiner";
 import { tasksQueryOptions, filterTasks } from "@/lib/supabase/queries";
 import { CATEGORY_KEYS, type TaskCategory } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
@@ -85,6 +86,11 @@ function HomePage() {
               </Button>
             </div>
           </motion.div>
+        </section>
+
+        {/* Ayadi token mining */}
+        <section className="mx-auto mt-10 max-w-2xl">
+          <AyadiMiner />
         </section>
 
         {/* Categories */}

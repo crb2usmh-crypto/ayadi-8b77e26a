@@ -32,6 +32,8 @@ import { Route as ApiPublicConversationsListRouteImport } from './routes/api.pub
 import { Route as ApiPublicBidsListRouteImport } from './routes/api.public.bids-list'
 import { Route as ApiPublicBidsCreateRouteImport } from './routes/api.public.bids-create'
 import { Route as ApiPublicBidsAcceptRouteImport } from './routes/api.public.bids-accept'
+import { Route as ApiPublicAyadiMineRouteImport } from './routes/api.public.ayadi-mine'
+import { Route as ApiPublicAyadiBalanceRouteImport } from './routes/api.public.ayadi-balance'
 
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
@@ -149,6 +151,16 @@ const ApiPublicBidsAcceptRoute = ApiPublicBidsAcceptRouteImport.update({
   path: '/api/public/bids-accept',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAyadiMineRoute = ApiPublicAyadiMineRouteImport.update({
+  id: '/api/public/ayadi-mine',
+  path: '/api/public/ayadi-mine',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAyadiBalanceRoute = ApiPublicAyadiBalanceRouteImport.update({
+  id: '/api/public/ayadi-balance',
+  path: '/api/public/ayadi-balance',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -160,6 +172,8 @@ export interface FileRoutesByFullPath {
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/messages/': typeof MessagesIndexRoute
   '/tasks/': typeof TasksIndexRoute
+  '/api/public/ayadi-balance': typeof ApiPublicAyadiBalanceRoute
+  '/api/public/ayadi-mine': typeof ApiPublicAyadiMineRoute
   '/api/public/bids-accept': typeof ApiPublicBidsAcceptRoute
   '/api/public/bids-create': typeof ApiPublicBidsCreateRoute
   '/api/public/bids-list': typeof ApiPublicBidsListRoute
@@ -184,6 +198,8 @@ export interface FileRoutesByTo {
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/messages': typeof MessagesIndexRoute
   '/tasks': typeof TasksIndexRoute
+  '/api/public/ayadi-balance': typeof ApiPublicAyadiBalanceRoute
+  '/api/public/ayadi-mine': typeof ApiPublicAyadiMineRoute
   '/api/public/bids-accept': typeof ApiPublicBidsAcceptRoute
   '/api/public/bids-create': typeof ApiPublicBidsCreateRoute
   '/api/public/bids-list': typeof ApiPublicBidsListRoute
@@ -210,6 +226,8 @@ export interface FileRoutesById {
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/messages/': typeof MessagesIndexRoute
   '/tasks/': typeof TasksIndexRoute
+  '/api/public/ayadi-balance': typeof ApiPublicAyadiBalanceRoute
+  '/api/public/ayadi-mine': typeof ApiPublicAyadiMineRoute
   '/api/public/bids-accept': typeof ApiPublicBidsAcceptRoute
   '/api/public/bids-create': typeof ApiPublicBidsCreateRoute
   '/api/public/bids-list': typeof ApiPublicBidsListRoute
@@ -237,6 +255,8 @@ export interface FileRouteTypes {
     | '/tasks/$taskId'
     | '/messages/'
     | '/tasks/'
+    | '/api/public/ayadi-balance'
+    | '/api/public/ayadi-mine'
     | '/api/public/bids-accept'
     | '/api/public/bids-create'
     | '/api/public/bids-list'
@@ -261,6 +281,8 @@ export interface FileRouteTypes {
     | '/tasks/$taskId'
     | '/messages'
     | '/tasks'
+    | '/api/public/ayadi-balance'
+    | '/api/public/ayadi-mine'
     | '/api/public/bids-accept'
     | '/api/public/bids-create'
     | '/api/public/bids-list'
@@ -286,6 +308,8 @@ export interface FileRouteTypes {
     | '/tasks/$taskId'
     | '/messages/'
     | '/tasks/'
+    | '/api/public/ayadi-balance'
+    | '/api/public/ayadi-mine'
     | '/api/public/bids-accept'
     | '/api/public/bids-create'
     | '/api/public/bids-list'
@@ -310,6 +334,8 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   TasksTaskIdRoute: typeof TasksTaskIdRoute
   TasksIndexRoute: typeof TasksIndexRoute
+  ApiPublicAyadiBalanceRoute: typeof ApiPublicAyadiBalanceRoute
+  ApiPublicAyadiMineRoute: typeof ApiPublicAyadiMineRoute
   ApiPublicBidsAcceptRoute: typeof ApiPublicBidsAcceptRoute
   ApiPublicBidsCreateRoute: typeof ApiPublicBidsCreateRoute
   ApiPublicBidsListRoute: typeof ApiPublicBidsListRoute
@@ -489,6 +515,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBidsAcceptRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/ayadi-mine': {
+      id: '/api/public/ayadi-mine'
+      path: '/api/public/ayadi-mine'
+      fullPath: '/api/public/ayadi-mine'
+      preLoaderRoute: typeof ApiPublicAyadiMineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/ayadi-balance': {
+      id: '/api/public/ayadi-balance'
+      path: '/api/public/ayadi-balance'
+      fullPath: '/api/public/ayadi-balance'
+      preLoaderRoute: typeof ApiPublicAyadiBalanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -514,6 +554,8 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   TasksTaskIdRoute: TasksTaskIdRoute,
   TasksIndexRoute: TasksIndexRoute,
+  ApiPublicAyadiBalanceRoute: ApiPublicAyadiBalanceRoute,
+  ApiPublicAyadiMineRoute: ApiPublicAyadiMineRoute,
   ApiPublicBidsAcceptRoute: ApiPublicBidsAcceptRoute,
   ApiPublicBidsCreateRoute: ApiPublicBidsCreateRoute,
   ApiPublicBidsListRoute: ApiPublicBidsListRoute,

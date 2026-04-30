@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TaskCard } from "@/components/common/TaskCard";
 import { PageTransition } from "@/components/layout/PageTransition";
+import { AyadiMiner } from "@/components/common/AyadiMiner";
 import { usePiAuth } from "@/components/providers/PiAuthProvider";
 import {
   profileQueryOptions,
@@ -125,6 +126,11 @@ function ProfilePage() {
           <StatCard icon={ListChecks} label={t("profile.completedTasks")} value={String(completed)} />
           <StatCard icon={Award} label={t("profile.publishedTasks")} value={String(published)} />
           <StatCard icon={Star} label={t("profile.rating")} value={rating} />
+        </div>
+
+        {/* Ayadi token mining */}
+        <div className="mt-6">
+          <AyadiMiner />
         </div>
 
         {/* Tabs */}
