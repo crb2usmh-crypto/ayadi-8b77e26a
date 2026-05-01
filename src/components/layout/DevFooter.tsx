@@ -4,12 +4,13 @@ import { toast } from "sonner";
 import { usePiAuth } from "@/components/providers/PiAuthProvider";
 
 export function DevFooter() {
-  const { loginAsDev } = usePiAuth();
+  const { loginAsDev, isDevModeAllowed } = usePiAuth();
   const navigate = useNavigate();
   const tapCountRef = useRef(0);
   const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleTap = () => {
+    if (!isDevModeAllowed) return;
     tapCountRef.current += 1;
     if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
     tapTimerRef.current = setTimeout(() => {
@@ -24,6 +25,10 @@ export function DevFooter() {
       navigate({ to: "/" });
     }
   };
+
+  if (!isDevModeAllowed) {
+    return null;
+  }
 
   return (
     <footer className="relative z-10 flex justify-center pb-2 pt-1">

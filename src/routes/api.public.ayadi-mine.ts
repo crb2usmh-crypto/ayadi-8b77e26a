@@ -54,7 +54,7 @@ export const Route = createFileRoute("/api/public/ayadi-mine")({
         const env = getSupabaseAdminEnv();
         if (!env) {
           return Response.json(
-            { error: "Backend not configured" },
+            { error: "Service temporarily unavailable" },
             { status: 500 },
           );
         }
@@ -150,7 +150,7 @@ export const Route = createFileRoute("/api/public/ayadi-mine")({
           });
         } catch (err) {
           console.error("[ayadi-mine] error:", err);
-          const message = err instanceof Error ? err.message : "Server error";
+          const message = "Server error";
           return Response.json({ error: message }, { status: 500 });
         }
       },

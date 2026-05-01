@@ -28,6 +28,7 @@ export interface PiSession {
 
 interface PiAuthContextValue {
   isPiBrowser: boolean;
+  isDevModeAllowed: boolean;
   session: PiSession | null;
   loading: boolean;
   error: string | null;
@@ -64,19 +65,33 @@ export function PiAuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Dev mode is only allowed when an explicit build-time flag is set OR
+  // when running on a non-production hostname (lovable preview / localhost).
+  const isDevModeAllowed = (() => {
+    if (import.meta.env.VITE_ALLOW_DEV_MODE === "true") return true;
+    if (import.meta.env.DEV) return true;
+    if (typeof window !== "undefined") {
+      const h = window.location.hostname;
+      if (h === "localhost" || h === "127.0.0.1") return true;
+      if (h.includes("id-preview--") || h.endsWith(".lovableproject.com")) return true;
+    }
+    return false;
+  })();
+
   // Detect Pi Browser & init SDK on mount.
   useEffect(() => {
     if (typeof window === "undefined") return;
     setIsPiBrowser(detectPiBrowser());
-    initPi(true); // sandbox mode
+    // sandbox=true only outside production; sandbox=false in published prod app.
+    initPi(isDevModeAllowed);
     setSession(loadSession());
-  }, []);
+  }, [isDevModeAllowed]);
 
   const login = useCallback(async (scopes: PiScope[] = ["username"]) => {
     setLoading(true);
     setError(null);
     try {
-      initPi(true);
+      initPi(isDevModeAllowed);
       const auth = await authenticateUser(scopes, (payment) => {
         console.warn("[PiAuth] incomplete payment:", payment);
       });
@@ -106,7 +121,7 @@ export function PiAuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isDevModeAllowed]);
 
   const logout = useCallback(() => {
     saveSession(null);
@@ -114,17 +129,21 @@ export function PiAuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const loginAsDev = useCallback(() => {
+    if (!isDevModeAllowed) {
+      console.warn("[PiAuth] Developer mode is disabled in production.");
+      return;
+    }
     const devSession: PiSession = {
       accessToken: "dev-mode-token",
       user: { uid: "dev-user-uid", username: "مطور" },
     };
     saveSession(devSession);
     setSession(devSession);
-  }, []);
+  }, [isDevModeAllowed]);
 
   const value = useMemo<PiAuthContextValue>(
-    () => ({ isPiBrowser, session, loading, error, login, loginAsDev, logout }),
-    [isPiBrowser, session, loading, error, login, loginAsDev, logout],
+    () => ({ isPiBrowser, isDevModeAllowed, session, loading, error, login, loginAsDev, logout }),
+    [isPiBrowser, isDevModeAllowed, session, loading, error, login, loginAsDev, logout],
   );
 
   return <PiAuthContext.Provider value={value}>{children}</PiAuthContext.Provider>;

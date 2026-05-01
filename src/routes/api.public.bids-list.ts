@@ -63,7 +63,7 @@ export const Route = createFileRoute("/api/public/bids-list")({
           const res = await fetch(url, { headers: adminHeaders(env) });
           if (!res.ok) {
             return Response.json(
-              { error: `Failed to load bids (${res.status})` },
+              { error: "Failed to load bids" },
               { status: 500 },
             );
           }
@@ -80,7 +80,7 @@ export const Route = createFileRoute("/api/public/bids-list")({
           return Response.json({ bids: visible });
         } catch (err) {
           console.error("[bids-list] error:", err);
-          const message = err instanceof Error ? err.message : "Server error";
+          const message = "Server error";
           return Response.json({ error: message }, { status: 500 });
         }
       },

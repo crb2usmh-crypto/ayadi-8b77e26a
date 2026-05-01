@@ -92,7 +92,7 @@ export const Route = createFileRoute("/api/public/ayadi-balance")({
           });
         } catch (err) {
           console.error("[ayadi-balance] error:", err);
-          const message = err instanceof Error ? err.message : "Server error";
+          const message = "Server error";
           return Response.json({ error: message }, { status: 500 });
         }
       },

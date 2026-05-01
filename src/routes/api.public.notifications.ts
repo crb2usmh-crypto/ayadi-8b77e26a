@@ -50,7 +50,7 @@ export const Route = createFileRoute("/api/public/notifications")({
           }
           piUid = json.uid;
         } catch (err) {
-          const message = err instanceof Error ? err.message : "Pi verification error";
+          console.error("[pi-verify] error:", err); const message = "Authentication failed";
           return Response.json({ error: message }, { status: 500 });
         }
 
