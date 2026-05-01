@@ -92,7 +92,7 @@ export const Route = createFileRoute("/api/public/tasks-create")({
           piUid = json.uid;
           username = json.username;
         } catch (err) {
-          const message = err instanceof Error ? err.message : "Pi verification error";
+          console.error("[pi-verify] error:", err); const message = "Authentication failed";
           return Response.json({ error: message }, { status: 500 });
         }
 
