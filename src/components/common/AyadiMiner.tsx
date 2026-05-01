@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Pickaxe, Coins, Clock, Sparkles, Loader2 } from "lucide-react";
+import { Pickaxe, Clock, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { usePiAuth } from "@/components/providers/PiAuthProvider";
 import { cn } from "@/lib/utils";
+import ayadiTokenImg from "@/assets/ayadi-token.png";
 
 interface ClaimEntry {
   id: string;
@@ -133,7 +134,11 @@ export function AyadiMiner() {
   if (!session) {
     return (
       <div className="glass-card relative overflow-hidden rounded-3xl p-6 text-center">
-        <Coins className="mx-auto mb-3 size-10 text-amber-500" />
+        <img
+          src={ayadiTokenImg}
+          alt="Ayadi Token"
+          className="mx-auto mb-3 size-16 rounded-full object-contain drop-shadow-[0_4px_12px_rgba(217,165,32,0.4)]"
+        />
         <h3 className="text-lg font-bold">{t("ayadi.title")}</h3>
         <p className="mt-2 text-sm text-muted-foreground">
           {t("ayadi.loginRequired")}
@@ -171,15 +176,11 @@ export function AyadiMiner() {
       />
 
       <div className="relative flex items-center gap-3">
-        <div
-          className="flex size-12 items-center justify-center rounded-2xl shadow-lg"
-          style={{
-            background:
-              "linear-gradient(135deg, oklch(0.85 0.17 85), oklch(0.65 0.17 60))",
-          }}
-        >
-          <Coins className="size-6 text-white" />
-        </div>
+        <img
+          src={ayadiTokenImg}
+          alt="Ayadi Token"
+          className="size-14 rounded-full object-contain drop-shadow-[0_4px_10px_rgba(217,165,32,0.45)]"
+        />
         <div className="flex-1">
           <h3 className="text-base font-bold">{t("ayadi.title")}</h3>
           <p className="text-xs text-muted-foreground">{t("ayadi.subtitle")}</p>
