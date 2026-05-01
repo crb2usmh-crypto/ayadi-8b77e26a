@@ -81,7 +81,7 @@ export const Route = createFileRoute("/api/public/tasks-create")({
           }
           if (!piRes.ok) {
             return Response.json(
-              { error: `Pi verification failed (${piRes.status})` },
+              { error: "Authentication service unavailable" },
               { status: 502 },
             );
           }
@@ -153,7 +153,7 @@ export const Route = createFileRoute("/api/public/tasks-create")({
             const detail = await insertRes.text();
             console.error("[tasks-create] insert failed:", insertRes.status, detail);
             return Response.json(
-              { error: `Failed to create task (${insertRes.status})` },
+              { error: "Failed to create task" },
               { status: 500 },
             );
           }

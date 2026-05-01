@@ -71,7 +71,7 @@ export const Route = createFileRoute("/api/public/bids-create")({
           );
           if (!taskRes.ok) {
             return Response.json(
-              { error: `Task lookup failed (${taskRes.status})` },
+              { error: "Service temporarily unavailable" },
               { status: 500 },
             );
           }
@@ -124,7 +124,7 @@ export const Route = createFileRoute("/api/public/bids-create")({
             const detail = await upsertRes.text();
             console.error("[bids-create] upsert failed:", upsertRes.status, detail);
             return Response.json(
-              { error: `Failed to submit offer (${upsertRes.status})` },
+              { error: "Failed to submit offer" },
               { status: 500 },
             );
           }

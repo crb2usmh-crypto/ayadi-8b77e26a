@@ -17,7 +17,7 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { isPiBrowser, session, loading, error, login, loginAsDev } = usePiAuth();
+  const { isPiBrowser, isDevModeAllowed, session, loading, error, login, loginAsDev } = usePiAuth();
   const tapCountRef = useRef(0);
   const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -39,6 +39,7 @@ function AuthPage() {
   };
 
   const handleSecretTap = () => {
+    if (!isDevModeAllowed) return;
     tapCountRef.current += 1;
     if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
     tapTimerRef.current = setTimeout(() => {
@@ -80,16 +81,18 @@ function AuthPage() {
           )}
         </div>
 
-        <div className="mt-6 flex justify-center">
-          <button
-            type="button"
-            onClick={handleSecretTap}
-            className="text-[11px] text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors px-3 py-2 select-none"
-            aria-label="dev"
-          >
-            Dev
-          </button>
-        </div>
+        {isDevModeAllowed && (
+          <div className="mt-6 flex justify-center">
+            <button
+              type="button"
+              onClick={handleSecretTap}
+              className="text-[11px] text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors px-3 py-2 select-none"
+              aria-label="dev"
+            >
+              Dev
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
