@@ -40,7 +40,7 @@ export const Route = createFileRoute("/api/public/notifications")({
           }
           if (!piRes.ok) {
             return Response.json(
-              { error: `Pi verification failed (${piRes.status})` },
+              { error: "Authentication service unavailable" },
               { status: 502 },
             );
           }

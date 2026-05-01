@@ -88,7 +88,8 @@ export async function authenticateUser(
     throw new Error("Pi SDK is not loaded. Open the app inside Pi Browser.");
   }
   if (!initialized) {
-    initPi(true);
+    const isSandbox = import.meta.env.VITE_PI_SANDBOX === "true" || import.meta.env.DEV;
+    initPi(isSandbox);
   }
   return window.Pi.authenticate(scopes, onIncompletePaymentFound);
 }
