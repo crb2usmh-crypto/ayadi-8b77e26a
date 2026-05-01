@@ -31,7 +31,19 @@ export const Route = createFileRoute("/api/public/pi-verify")({
         const accessToken =
           typeof body.accessToken === "string" ? body.accessToken.trim() : "";
         if (!accessToken || accessToken.length > 4096) {
-          return Response.json({ error: "Missing or invalid accessToken" }, { status: 400 });
+          return Response.json({ error: "Authentication required" }, { status: 400 });
+        }
+
+        // Developer Mode short-circuit (only honored when explicitly enabled).
+        if (accessToken === "dev-mode-token") {
+          if (process.env.ALLOW_DEV_MODE === "true") {
+            return Response.json({
+              uid: "dev-user-uid",
+              username: "مطور",
+              profile: null,
+            });
+          }
+          return Response.json({ error: "Authentication failed" }, { status: 401 });
         }
 
         // ---- 2. Verify with Pi Platform ----------------------------------
@@ -43,23 +55,24 @@ export const Route = createFileRoute("/api/public/pi-verify")({
           });
 
           if (piRes.status === 401) {
-            return Response.json({ error: "Pi authentication failed" }, { status: 401 });
+            return Response.json({ error: "Authentication failed" }, { status: 401 });
           }
           if (!piRes.ok) {
+            console.error("[pi-verify] upstream:", piRes.status);
             return Response.json(
-              { error: `Pi verification failed (${piRes.status})` },
+              { error: "Authentication service unavailable" },
               { status: 502 },
             );
           }
 
           const json = (await piRes.json()) as { uid?: string; username?: string };
           if (!json?.uid || !json?.username) {
-            return Response.json({ error: "Invalid Pi user payload" }, { status: 502 });
+            return Response.json({ error: "Authentication service unavailable" }, { status: 502 });
           }
           me = { uid: json.uid, username: json.username };
         } catch (err) {
-          const message = err instanceof Error ? err.message : "Pi verification error";
-          return Response.json({ error: message }, { status: 500 });
+          console.error("[pi-verify] error:", err);
+          return Response.json({ error: "Authentication failed" }, { status: 500 });
         }
 
         // ---- 3. Persist to `profiles` (best-effort) ----------------------
