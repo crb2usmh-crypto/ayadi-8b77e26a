@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Pickaxe, Coins, Clock, Sparkles, Loader2 } from "lucide-react";
+import { Pickaxe, Clock, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { usePiAuth } from "@/components/providers/PiAuthProvider";
