@@ -37,7 +37,7 @@ export const Route = createFileRoute("/api/public/reviews-for-task")({
 
         const env = getSupabaseAdminEnv();
         if (!env) {
-          return Response.json({ error: "Backend not configured" }, { status: 500 });
+          return Response.json({ error: "Service temporarily unavailable" }, { status: 500 });
         }
 
         try {
@@ -71,7 +71,7 @@ export const Route = createFileRoute("/api/public/reviews-for-task")({
           return Response.json({ reviews, myReviewSubmitted });
         } catch (err) {
           console.error("[reviews-for-task] error:", err);
-          const message = err instanceof Error ? err.message : "Server error";
+          const message = "Server error";
           return Response.json({ error: message }, { status: 500 });
         }
       },

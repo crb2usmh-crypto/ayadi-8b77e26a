@@ -38,7 +38,7 @@ export const Route = createFileRoute("/api/public/tasks-complete")({
 
         const env = getSupabaseAdminEnv();
         if (!env) {
-          return Response.json({ error: "Backend not configured" }, { status: 500 });
+          return Response.json({ error: "Service temporarily unavailable" }, { status: 500 });
         }
 
         try {
@@ -127,7 +127,7 @@ export const Route = createFileRoute("/api/public/tasks-complete")({
           return Response.json({ ok: true });
         } catch (err) {
           console.error("[tasks-complete] error:", err);
-          const message = err instanceof Error ? err.message : "Server error";
+          const message = "Server error";
           return Response.json({ error: message }, { status: 500 });
         }
       },

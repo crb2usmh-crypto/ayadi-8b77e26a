@@ -101,7 +101,7 @@ export const Route = createFileRoute("/api/public/tasks-create")({
         const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
         if (!supabaseUrl || !serviceKey) {
           return Response.json(
-            { error: "Backend not configured (SUPABASE_URL/SERVICE_ROLE_KEY)" },
+            { error: "Service temporarily unavailable" },
             { status: 500 },
           );
         }
@@ -162,7 +162,7 @@ export const Route = createFileRoute("/api/public/tasks-create")({
           return Response.json({ task: Array.isArray(rows) ? rows[0] : null });
         } catch (err) {
           console.error("[tasks-create] error:", err);
-          const message = err instanceof Error ? err.message : "Server error";
+          const message = "Server error";
           return Response.json({ error: message }, { status: 500 });
         }
       },

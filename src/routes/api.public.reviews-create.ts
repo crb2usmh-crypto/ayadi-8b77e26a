@@ -48,7 +48,7 @@ export const Route = createFileRoute("/api/public/reviews-create")({
 
         const env = getSupabaseAdminEnv();
         if (!env) {
-          return Response.json({ error: "Backend not configured" }, { status: 500 });
+          return Response.json({ error: "Service temporarily unavailable" }, { status: 500 });
         }
 
         try {
@@ -161,7 +161,7 @@ export const Route = createFileRoute("/api/public/reviews-create")({
           return Response.json({ review, average, count });
         } catch (err) {
           console.error("[reviews-create] error:", err);
-          const message = err instanceof Error ? err.message : "Server error";
+          const message = "Server error";
           return Response.json({ error: message }, { status: 500 });
         }
       },

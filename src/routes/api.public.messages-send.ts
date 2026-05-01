@@ -51,7 +51,7 @@ export const Route = createFileRoute("/api/public/messages-send")({
 
         const env = getSupabaseAdminEnv();
         if (!env) {
-          return Response.json({ error: "Backend not configured" }, { status: 500 });
+          return Response.json({ error: "Service temporarily unavailable" }, { status: 500 });
         }
 
         try {
@@ -122,7 +122,7 @@ export const Route = createFileRoute("/api/public/messages-send")({
           return Response.json({ message });
         } catch (err) {
           console.error("[messages-send] error:", err);
-          const m = err instanceof Error ? err.message : "Server error";
+          const m = "Server error";
           return Response.json({ error: m }, { status: 500 });
         }
       },

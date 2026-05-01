@@ -55,7 +55,7 @@ export const Route = createFileRoute("/api/public/bids-create")({
         const env = getSupabaseAdminEnv();
         if (!env) {
           return Response.json(
-            { error: "Backend not configured" },
+            { error: "Service temporarily unavailable" },
             { status: 500 },
           );
         }
@@ -157,7 +157,7 @@ export const Route = createFileRoute("/api/public/bids-create")({
           return Response.json({ bid });
         } catch (err) {
           console.error("[bids-create] error:", err);
-          const message = err instanceof Error ? err.message : "Server error";
+          const message = "Server error";
           return Response.json({ error: message }, { status: 500 });
         }
       },

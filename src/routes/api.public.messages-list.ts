@@ -41,7 +41,7 @@ export const Route = createFileRoute("/api/public/messages-list")({
 
         const env = getSupabaseAdminEnv();
         if (!env) {
-          return Response.json({ error: "Backend not configured" }, { status: 500 });
+          return Response.json({ error: "Service temporarily unavailable" }, { status: 500 });
         }
 
         try {
@@ -81,7 +81,7 @@ export const Route = createFileRoute("/api/public/messages-list")({
           );
           if (!msgRes.ok) {
             return Response.json(
-              { error: `Failed to load messages (${msgRes.status})` },
+              { error: "Failed to load messages" },
               { status: 500 },
             );
           }
@@ -90,7 +90,7 @@ export const Route = createFileRoute("/api/public/messages-list")({
           return Response.json({ conversation, messages });
         } catch (err) {
           console.error("[messages-list] error:", err);
-          const m = err instanceof Error ? err.message : "Server error";
+          const m = "Server error";
           return Response.json({ error: m }, { status: 500 });
         }
       },
