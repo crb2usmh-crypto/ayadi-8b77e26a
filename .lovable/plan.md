@@ -1,42 +1,60 @@
+# إصلاح "Failed to create task" في مسار نشر المهام
 
-## المشكلة المُكتشفة
+## التشخيص
 
-عند فحص `https://ayadi.lovable.app/validation-key.txt` مباشرةً:
-- ✅ المحتوى صحيح: `119831831c401b2aa40aceb7e729f15de5`
-- ✅ الحالة: `HTTP 200`
-- ❌ **`Content-Type: text/html; charset=utf-8`** بدلاً من `text/plain`
+بعد فحص الكود، تبيّن:
 
-Pi Network validator يتحقق بدقة من Content-Type ويرفض أي استجابة ليست `text/plain`. هذا هو سبب رسالة "Failed to validate the Validation Key".
+1. **المسار المعني**: `src/routes/api.public.tasks-create.ts` — المُستدعى من `src/routes/post-task.tsx` عند الضغط على "نشر المهمة".
+2. **الإعداد سليم**: الكود **يستخدم بالفعل** `SUPABASE_SERVICE_ROLE_KEY` (السطر 101) ويتجاوز RLS، ويستخرج `pi_uid` من رمز Pi عبر `https://api.minepi.com/v2/me` (السطر 76-93). الأسرار `SUPABASE_URL` و `SUPABASE_SERVICE_ROLE_KEY` موجودة في المشروع.
+3. **اسم العمود الصحيح هو `owner_pi_uid`** وليس `poster_id` (راجع `src/lib/supabase/types.ts:38`). الاقتراح في useful-context باستخدام `poster_id` خاطئ لهذا المخطط.
+4. **المشكلة الحقيقية**: سطر `Failed to create task` يظهر فقط حين يفشل `INSERT` على PostgREST. السبب الأرجح هو **`ensureProfile` upsert يُنفَّذ بـ fire-and-forget بدون أي فحص للنتيجة** (السطر 111-127). إن فشل (لأي سبب: عمود مفقود، تعارض schema، اسم عمود `avatar_seed` غير موجود في الإنتاج…)، فإن إدراج المهمة يفشل لاحقًا بسبب قيد المفتاح الأجنبي `tasks.owner_pi_uid → profiles.pi_uid`، والمستخدم يرى رسالة عامة بلا سياق.
+5. **سبب ثانوي محتمل**: تفاصيل الخطأ من Postgres تُسجَّل فقط في الخادم (`console.error`) ولا تصل إلى الواجهة، فيستحيل تشخيص الفشل من الـ UI.
 
-السبب: مسارات Server Routes في TanStack Start على Lovable hosting يتم إعادة كتابة الـ Content-Type لها أحياناً عبر Cloudflare إلى `text/html`، خصوصاً للمسارات التي تنتهي بامتدادات غير قياسية مثل `.txt`.
+السجلات الحالية لا تُظهر أي طلب `tasks-create` مكتمل — فقط `notifications` و `ayadi-balance` بـ 401 لأن المستخدم يستعمل `dev-mode-token` بينما `ALLOW_DEV_MODE` غير مفعّل في الخادم.
 
-## الحل
+## التغييرات المخطّط لها
 
-نقل مفتاح التحقق إلى **ملف ثابت** في مجلد `public/`. الملفات في `public/` تُقدَّم مباشرةً من CDN مع نوع MIME الصحيح المُستنتج من امتداد الملف.
+### 1) `src/routes/api.public.tasks-create.ts` — المسار الرئيسي
 
-## التنفيذ
+- **التحقق من نجاح `profile upsert` بدلاً من تجاهله**: قراءة الاستجابة، وفي حال الفشل إعادة 500 مع رسالة عربية + إخراج تفاصيل PostgREST في `console.error` (`status` + body).
+- **إعادة تفاصيل الخطأ الحقيقية للواجهة (في غير الإنتاج فقط)** بصيغة آمنة: تمرير `code/message/hint` من PostgREST عبر حقل `details` يظهر فقط حين `process.env.ALLOW_DEV_MODE === "true"`. في الإنتاج تبقى الرسالة عامة.
+- **استبدال جميع رسائل الخطأ بنصوص عربية واضحة**:
+  - 400: `"بيانات غير صالحة"` / `"العنوان والوصف مطلوبان"` / `"رمز المصادقة مفقود"`.
+  - 401: `"فشلت مصادقة Pi، يرجى تسجيل الدخول مجددًا"`.
+  - 502: `"خدمة Pi غير متاحة حاليًا"`.
+  - 500 (إعداد الخادم): `"إعدادات الخادم غير مكتملة"`.
+  - 500 (فشل ملف المستخدم): `"تعذّر إنشاء ملف المستخدم"`.
+  - 500 (فشل الإدراج): `"تعذّر حفظ المهمة في قاعدة البيانات"`.
+- **توحيد قيم الإدراج** بإضافة `status: "open"` صراحةً وحذف `image_seed` إذا كانت قيمة فارغة، لتفادي قيود NOT NULL/CHECK المحتملة.
+- **logging أوضح**: عند الفشل نطبع `insertRes.status`, `statusText`, و `body` كاملاً.
 
-**1. إنشاء ملف ثابت:**
-- إنشاء `public/validation-key.txt` يحتوي على السطر الواحد:
-  ```
-  119831831c401b2aa40aceb7e729f15de5
-  ```
+### 2) `src/lib/server/piVerify.ts` — تقوية `ensureProfile`
 
-**2. حذف المسارات القديمة المتعارضة:**
-- حذف `src/routes/validation-key[.]txt.ts` (لأن الملف الثابت في public له الأولوية ولتفادي الالتباس)
-- الإبقاء على `src/routes/api.public.validation-key.ts` كاحتياطي (مسار بديل عبر `/api/public/validation-key`)
+- جعل الدالة تُعيد `{ ok: boolean; status?: number; detail?: string }` بدل `void`، حتى يستطيع كل مسار استدعاء أن يقرر ما إذا كان يكمل أم يُرجع خطأ.
+- (لن يُكسر المستدعون الآخرون لأن النتيجة قابلة للتجاهل.)
 
-**3. النشر:**
-- بعد تطبيق التغييرات، يجب الضغط على **Publish → Update** في Lovable لنشر الملف الثابت إلى `ayadi.lovable.app`.
+### 3) `src/routes/post-task.tsx` — تحسين عرض الخطأ
 
-**4. التحقق:**
-- بعد النشر، فحص الرابط:
-  ```
-  curl -I https://ayadi.lovable.app/validation-key.txt
-  ```
-  يجب أن يعرض `Content-Type: text/plain`.
-- ثم العودة إلى Pi Developer Portal والضغط على **Verify Domain** مرة أخرى.
+- استخراج `body.details` (إن وُجد) وإلحاقه بـ toast في وضع التطوير فقط، حتى يستطيع المستخدم الإبلاغ عن سبب دقيق دون كشف داخليات في الإنتاج.
+- التأكد أن الرسالة الافتراضية المعروضة عربية وليست `Failed (${res.status})`.
 
-## ملاحظة مهمة للمستخدم
+## الملفات التي ستُعدَّل
 
-التغيير في الكود وحده لن يحل المشكلة على الموقع المنشور. **يجب الضغط على زر Publish → Update** بعد تطبيق التعديلات حتى يصل الملف الجديد إلى `ayadi.lovable.app`، ثم إعادة محاولة التحقق من Pi Browser.
+```text
+src/routes/api.public.tasks-create.ts   (إعادة كتابة كاملة لمنطق الإدراج + رسائل عربية)
+src/lib/server/piVerify.ts              (ensureProfile تُعيد نتيجة بدل void)
+src/routes/post-task.tsx                (عرض details في dev + رسالة افتراضية عربية)
+```
+
+## ما لن يتغير
+
+- لا تعديل على المخطط (Schema) — العمود يبقى `owner_pi_uid`.
+- لا تغيير على RLS (`tasks` غير متأثر؛ نكتب بـ service-role).
+- لا تغيير على آلية مصادقة Pi نفسها.
+- لا حاجة لمايجرشن SQL.
+
+## كيف نتحقق بعد التطبيق
+
+1. تسجيل الدخول بحساب Pi حقيقي (أو تفعيل `ALLOW_DEV_MODE=true` في أسرار المشروع للاختبار بـ "مطور").
+2. نشر مهمة من `/post-task`.
+3. إن فشلت: ستظهر رسالة عربية محددة (مثلاً "تعذّر إنشاء ملف المستخدم") + التفاصيل الفنية في console الخادم (`stack_modern--server-function-logs`)، فنعرف بالضبط أي عمود/قيد هو السبب ونعالجه في خطوة لاحقة.
