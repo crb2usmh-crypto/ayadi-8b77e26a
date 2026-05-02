@@ -106,11 +106,41 @@ export function adminHeaders(
 export async function ensureProfile(
   env: SupabaseAdminEnv,
   identity: PiIdentity,
-): Promise<{ ok: true } | { ok: false; status: number; detail: string }> {
+): Promise<
+  | { ok: true; created: boolean }
+  | { ok: false; status: number; detail: string }
+> {
   try {
-    const res = await fetch(`${env.url}/rest/v1/profiles?on_conflict=pi_uid`, {
+    // 1) Lookup by pi_uid (service-role bypasses RLS).
+    const lookupUrl = `${env.url}/rest/v1/profiles?pi_uid=eq.${encodeURIComponent(
+      identity.uid,
+    )}&select=pi_uid&limit=1`;
+    const lookupRes = await fetch(lookupUrl, {
+      method: "GET",
+      headers: adminHeaders(env),
+    });
+    if (!lookupRes.ok) {
+      const body = await lookupRes.text();
+      console.error(
+        "[ensureProfile] lookup failed:",
+        lookupRes.status,
+        body,
+      );
+      return {
+        ok: false,
+        status: 502,
+        detail: `profile_lookup_failed: ${lookupRes.status} ${body}`,
+      };
+    }
+    const rows = (await lookupRes.json()) as unknown;
+    if (Array.isArray(rows) && rows.length > 0) {
+      return { ok: true, created: false };
+    }
+
+    // 2) Insert new profile.
+    const insertRes = await fetch(`${env.url}/rest/v1/profiles`, {
       method: "POST",
-      headers: adminHeaders(env, "resolution=merge-duplicates,return=minimal"),
+      headers: adminHeaders(env, "return=minimal"),
       body: JSON.stringify([
         {
           pi_uid: identity.uid,
@@ -120,12 +150,42 @@ export async function ensureProfile(
         },
       ]),
     });
-    if (!res.ok) {
-      const detail = await res.text();
-      console.error("[ensureProfile] failed:", res.status, detail);
-      return { ok: false, status: res.status, detail };
+
+    if (insertRes.ok) {
+      console.log("[ensureProfile] created profile for", identity.uid);
+      return { ok: true, created: true };
     }
-    return { ok: true };
+
+    // 409 = race with concurrent insert; treat as success.
+    if (insertRes.status === 409) {
+      return { ok: true, created: true };
+    }
+
+    const rawBody = await insertRes.text();
+    let parsedDetail = rawBody;
+    try {
+      const j = JSON.parse(rawBody) as {
+        code?: string;
+        message?: string;
+        hint?: string;
+        details?: string;
+      };
+      parsedDetail = [j.code, j.message, j.hint ?? j.details]
+        .filter(Boolean)
+        .join(" | ");
+    } catch {
+      // keep rawBody
+    }
+    console.error(
+      "[ensureProfile] insert failed:",
+      insertRes.status,
+      parsedDetail,
+    );
+    return {
+      ok: false,
+      status: insertRes.status,
+      detail: `profile_insert_failed: ${parsedDetail}`,
+    };
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     console.error("[ensureProfile] error:", detail);
