@@ -1,4 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import {
+  verifyPiToken,
+  getSupabaseAdminEnv,
+  adminHeaders,
+  ensureProfile,
+} from "@/lib/server/piVerify";
 
 /**
  * Creates a new task on behalf of the authenticated Pi user.
@@ -32,6 +38,17 @@ function clampStr(v: unknown, max: number): string | null {
   return trimmed.slice(0, max);
 }
 
+/** Only expose internal diagnostics when explicitly enabled (dev/QA). */
+function withDetails(
+  payload: { error: string },
+  detail: string | undefined,
+): Record<string, unknown> {
+  if (process.env.ALLOW_DEV_MODE === "true" && detail) {
+    return { ...payload, details: detail };
+  }
+  return payload;
+}
+
 export const Route = createFileRoute("/api/public/tasks-create")({
   server: {
     handlers: {
@@ -41,13 +58,19 @@ export const Route = createFileRoute("/api/public/tasks-create")({
         try {
           body = await request.json();
         } catch {
-          return Response.json({ error: "Invalid JSON body" }, { status: 400 });
+          return Response.json(
+            { error: "بيانات غير صالحة" },
+            { status: 400 },
+          );
         }
 
         const accessToken =
           typeof body.accessToken === "string" ? body.accessToken.trim() : "";
         if (!accessToken || accessToken.length > 4096) {
-          return Response.json({ error: "Missing accessToken" }, { status: 400 });
+          return Response.json(
+            { error: "رمز المصادقة مفقود" },
+            { status: 400 },
+          );
         }
 
         const t = body.task ?? {};
@@ -64,96 +87,85 @@ export const Route = createFileRoute("/api/public/tasks-create")({
 
         if (!title || !description) {
           return Response.json(
-            { error: "Title and description are required" },
+            { error: "العنوان والوصف مطلوبان" },
             { status: 400 },
           );
         }
 
-        // ---- 2. Verify Pi token ----
-        let piUid: string;
-        let username: string;
-        try {
-          const piRes = await fetch("https://api.minepi.com/v2/me", {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          });
-          if (piRes.status === 401) {
-            return Response.json({ error: "Pi authentication failed" }, { status: 401 });
-          }
-          if (!piRes.ok) {
-            return Response.json(
-              { error: "Authentication service unavailable" },
-              { status: 502 },
-            );
-          }
-          const json = (await piRes.json()) as { uid?: string; username?: string };
-          if (!json?.uid || !json?.username) {
-            return Response.json({ error: "Invalid Pi user payload" }, { status: 502 });
-          }
-          piUid = json.uid;
-          username = json.username;
-        } catch (err) {
-          console.error("[pi-verify] error:", err); const message = "Authentication failed";
-          return Response.json({ error: message }, { status: 500 });
+        // ---- 2. Verify Pi token (centralized helper) ----
+        const verify = await verifyPiToken(accessToken);
+        if (!verify.ok) {
+          const arabic =
+            verify.status === 401
+              ? "فشلت مصادقة Pi، يرجى تسجيل الدخول مجددًا"
+              : verify.status === 502
+                ? "خدمة Pi غير متاحة حاليًا"
+                : "تعذّر التحقق من الهوية";
+          return Response.json({ error: arabic }, { status: verify.status });
         }
+        const { uid: piUid, username } = verify.identity;
 
         // ---- 3. Insert via service-role ----
-        const supabaseUrl = process.env.SUPABASE_URL;
-        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-        if (!supabaseUrl || !serviceKey) {
+        const env = getSupabaseAdminEnv();
+        if (!env) {
+          console.error(
+            "[tasks-create] missing env: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY",
+          );
           return Response.json(
-            { error: "Service temporarily unavailable" },
+            { error: "إعدادات الخادم غير مكتملة" },
             { status: 500 },
           );
         }
 
         try {
-          // Ensure profile exists (so the FK on tasks.owner_pi_uid resolves).
-          await fetch(`${supabaseUrl}/rest/v1/profiles?on_conflict=pi_uid`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              apikey: serviceKey,
-              Authorization: `Bearer ${serviceKey}`,
-              Prefer: "resolution=merge-duplicates,return=minimal",
-            },
-            body: JSON.stringify([
-              {
-                pi_uid: piUid,
-                username,
-                avatar_seed: username,
-                updated_at: new Date().toISOString(),
-              },
-            ]),
+          // Ensure profile exists (FK on tasks.owner_pi_uid -> profiles.pi_uid).
+          // CRITICAL: must succeed, otherwise the task INSERT will fail with FK violation.
+          const profileResult = await ensureProfile(env, {
+            uid: piUid,
+            username,
           });
+          if (!profileResult.ok) {
+            return Response.json(
+              withDetails(
+                { error: "تعذّر إنشاء ملف المستخدم" },
+                profileResult.detail,
+              ),
+              { status: 500 },
+            );
+          }
 
           // Insert the task.
-          const insertRes = await fetch(`${supabaseUrl}/rest/v1/tasks`, {
+          const taskRow: Record<string, unknown> = {
+            owner_pi_uid: piUid,
+            title,
+            description,
+            category,
+            budget,
+            status: "open",
+          };
+          if (location) taskRow.location = location;
+          if (deadline) taskRow.deadline = deadline;
+          if (title) taskRow.image_seed = title.slice(0, 32);
+
+          const insertRes = await fetch(`${env.url}/rest/v1/tasks`, {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              apikey: serviceKey,
-              Authorization: `Bearer ${serviceKey}`,
-              Prefer: "return=representation",
-            },
-            body: JSON.stringify([
-              {
-                owner_pi_uid: piUid,
-                title,
-                description,
-                category,
-                budget,
-                location,
-                deadline,
-                image_seed: title.slice(0, 32),
-              },
-            ]),
+            headers: adminHeaders(env, "return=representation"),
+            body: JSON.stringify([taskRow]),
           });
 
           if (!insertRes.ok) {
             const detail = await insertRes.text();
-            console.error("[tasks-create] insert failed:", insertRes.status, detail);
+            console.error(
+              "[tasks-create] insert failed:",
+              insertRes.status,
+              insertRes.statusText,
+              detail,
+            );
             return Response.json(
-              { error: "Failed to create task" },
+              withDetails(
+                { error: "تعذّر حفظ المهمة في قاعدة البيانات" },
+                `${insertRes.status} ${detail}`,
+              ),
               { status: 500 },
             );
           }
@@ -162,8 +174,11 @@ export const Route = createFileRoute("/api/public/tasks-create")({
           return Response.json({ task: Array.isArray(rows) ? rows[0] : null });
         } catch (err) {
           console.error("[tasks-create] error:", err);
-          const message = "Server error";
-          return Response.json({ error: message }, { status: 500 });
+          const detail = err instanceof Error ? err.message : String(err);
+          return Response.json(
+            withDetails({ error: "خطأ في الخادم" }, detail),
+            { status: 500 },
+          );
         }
       },
     },

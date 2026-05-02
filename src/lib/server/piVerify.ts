@@ -106,19 +106,31 @@ export function adminHeaders(
 export async function ensureProfile(
   env: SupabaseAdminEnv,
   identity: PiIdentity,
-): Promise<void> {
-  await fetch(`${env.url}/rest/v1/profiles?on_conflict=pi_uid`, {
-    method: "POST",
-    headers: adminHeaders(env, "resolution=merge-duplicates,return=minimal"),
-    body: JSON.stringify([
-      {
-        pi_uid: identity.uid,
-        username: identity.username,
-        avatar_seed: identity.username,
-        updated_at: new Date().toISOString(),
-      },
-    ]),
-  });
+): Promise<{ ok: true } | { ok: false; status: number; detail: string }> {
+  try {
+    const res = await fetch(`${env.url}/rest/v1/profiles?on_conflict=pi_uid`, {
+      method: "POST",
+      headers: adminHeaders(env, "resolution=merge-duplicates,return=minimal"),
+      body: JSON.stringify([
+        {
+          pi_uid: identity.uid,
+          username: identity.username,
+          avatar_seed: identity.username,
+          updated_at: new Date().toISOString(),
+        },
+      ]),
+    });
+    if (!res.ok) {
+      const detail = await res.text();
+      console.error("[ensureProfile] failed:", res.status, detail);
+      return { ok: false, status: res.status, detail };
+    }
+    return { ok: true };
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error("[ensureProfile] error:", detail);
+    return { ok: false, status: 500, detail };
+  }
 }
 
 /**
