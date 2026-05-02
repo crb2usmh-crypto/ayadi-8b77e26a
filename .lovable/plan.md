@@ -1,60 +1,66 @@
-# إصلاح "Failed to create task" في مسار نشر المهام
-
 ## التشخيص
 
-بعد فحص الكود، تبيّن:
-
-1. **المسار المعني**: `src/routes/api.public.tasks-create.ts` — المُستدعى من `src/routes/post-task.tsx` عند الضغط على "نشر المهمة".
-2. **الإعداد سليم**: الكود **يستخدم بالفعل** `SUPABASE_SERVICE_ROLE_KEY` (السطر 101) ويتجاوز RLS، ويستخرج `pi_uid` من رمز Pi عبر `https://api.minepi.com/v2/me` (السطر 76-93). الأسرار `SUPABASE_URL` و `SUPABASE_SERVICE_ROLE_KEY` موجودة في المشروع.
-3. **اسم العمود الصحيح هو `owner_pi_uid`** وليس `poster_id` (راجع `src/lib/supabase/types.ts:38`). الاقتراح في useful-context باستخدام `poster_id` خاطئ لهذا المخطط.
-4. **المشكلة الحقيقية**: سطر `Failed to create task` يظهر فقط حين يفشل `INSERT` على PostgREST. السبب الأرجح هو **`ensureProfile` upsert يُنفَّذ بـ fire-and-forget بدون أي فحص للنتيجة** (السطر 111-127). إن فشل (لأي سبب: عمود مفقود، تعارض schema، اسم عمود `avatar_seed` غير موجود في الإنتاج…)، فإن إدراج المهمة يفشل لاحقًا بسبب قيد المفتاح الأجنبي `tasks.owner_pi_uid → profiles.pi_uid`، والمستخدم يرى رسالة عامة بلا سياق.
-5. **سبب ثانوي محتمل**: تفاصيل الخطأ من Postgres تُسجَّل فقط في الخادم (`console.error`) ولا تصل إلى الواجهة، فيستحيل تشخيص الفشل من الـ UI.
-
-السجلات الحالية لا تُظهر أي طلب `tasks-create` مكتمل — فقط `notifications` و `ayadi-balance` بـ 401 لأن المستخدم يستعمل `dev-mode-token` بينما `ALLOW_DEV_MODE` غير مفعّل في الخادم.
+- المسار `src/routes/api.public.tasks-create.ts` يستدعي `ensureProfile` التي تنفّذ `upsert` بـ `Prefer: resolution=merge-duplicates,return=minimal` على `profiles?on_conflict=pi_uid`.
+- إذا فشل الـ upsert (بسبب قيد NOT NULL، عمود مفقود مثل `display_name`، أو سياسة RLS تمنع حتى service-role في حالة شاذة)، يرجع المسار رسالة عامة "تعذّر إنشاء ملف المستخدم" بدون سبب.
+- الحل المطلوب: استبدال نمط "upsert الأعمى" بنمط **check-then-insert**: أولاً قراءة الصف بـ `pi_uid`، وإن لم يوجد إنشاؤه بـ service role مع تمرير تفاصيل الخطأ إلى الواجهة عند الفشل.
 
 ## التغييرات المخطّط لها
 
-### 1) `src/routes/api.public.tasks-create.ts` — المسار الرئيسي
+### 1) `src/lib/server/piVerify.ts` — إعادة كتابة `ensureProfile`
 
-- **التحقق من نجاح `profile upsert` بدلاً من تجاهله**: قراءة الاستجابة، وفي حال الفشل إعادة 500 مع رسالة عربية + إخراج تفاصيل PostgREST في `console.error` (`status` + body).
-- **إعادة تفاصيل الخطأ الحقيقية للواجهة (في غير الإنتاج فقط)** بصيغة آمنة: تمرير `code/message/hint` من PostgREST عبر حقل `details` يظهر فقط حين `process.env.ALLOW_DEV_MODE === "true"`. في الإنتاج تبقى الرسالة عامة.
-- **استبدال جميع رسائل الخطأ بنصوص عربية واضحة**:
-  - 400: `"بيانات غير صالحة"` / `"العنوان والوصف مطلوبان"` / `"رمز المصادقة مفقود"`.
-  - 401: `"فشلت مصادقة Pi، يرجى تسجيل الدخول مجددًا"`.
-  - 502: `"خدمة Pi غير متاحة حاليًا"`.
-  - 500 (إعداد الخادم): `"إعدادات الخادم غير مكتملة"`.
-  - 500 (فشل ملف المستخدم): `"تعذّر إنشاء ملف المستخدم"`.
-  - 500 (فشل الإدراج): `"تعذّر حفظ المهمة في قاعدة البيانات"`.
-- **توحيد قيم الإدراج** بإضافة `status: "open"` صراحةً وحذف `image_seed` إذا كانت قيمة فارغة، لتفادي قيود NOT NULL/CHECK المحتملة.
-- **logging أوضح**: عند الفشل نطبع `insertRes.status`, `statusText`, و `body` كاملاً.
+استبدال upsert بآلية ثلاث خطوات واضحة، كل خطوة لها رسالة خطأ مميّزة:
 
-### 2) `src/lib/server/piVerify.ts` — تقوية `ensureProfile`
+1. **GET** على `${url}/rest/v1/profiles?pi_uid=eq.<uid>&select=pi_uid&limit=1` بـ service-role.
+   - فشل الشبكة/الاستعلام → `{ ok:false, status:502, detail:"profile_lookup_failed: <body>" }`.
+2. إذا الصف موجود → `{ ok:true, created:false }` فورًا.
+3. خلاف ذلك **POST** على `${url}/rest/v1/profiles` (بدون `on_conflict`) مع `Prefer: return=minimal` ومحتوى:
+   ```json
+   { "pi_uid": uid, "username": username, "avatar_seed": username, "updated_at": "<iso>" }
+   ```
+   - عند 409 (تنافس متزامن) نعتبره نجاح: `{ ok:true, created:true }`.
+   - عند أي خطأ آخر نقرأ الـ body كنص ونرجعه: `{ ok:false, status, detail:"profile_insert_failed: <code> <message> <hint>" }` بعد محاولة `JSON.parse` لاستخراج `code/message/hint` من PostgREST.
+4. كتلة `try/catch` خارجية ترجع `status:500` مع رسالة الاستثناء.
 
-- جعل الدالة تُعيد `{ ok: boolean; status?: number; detail?: string }` بدل `void`، حتى يستطيع كل مسار استدعاء أن يقرر ما إذا كان يكمل أم يُرجع خطأ.
-- (لن يُكسر المستدعون الآخرون لأن النتيجة قابلة للتجاهل.)
+التوقيع الجديد: `Promise<{ ok:true; created:boolean } | { ok:false; status:number; detail:string }>`. المستدعون الآخرون (إن وُجدوا) لن يتأثروا لأن خاصية `ok` تبقى الأساس.
 
-### 3) `src/routes/post-task.tsx` — تحسين عرض الخطأ
+### 2) `src/routes/api.public.tasks-create.ts` — تحسين رسائل الخطأ
 
-- استخراج `body.details` (إن وُجد) وإلحاقه بـ toast في وضع التطوير فقط، حتى يستطيع المستخدم الإبلاغ عن سبب دقيق دون كشف داخليات في الإنتاج.
-- التأكد أن الرسالة الافتراضية المعروضة عربية وليست `Failed (${res.status})`.
+تعديل قسم فحص نتيجة `ensureProfile` ليفرّق بين أسباب الفشل:
+
+```ts
+const profileResult = await ensureProfile(env, { uid: piUid, username });
+if (!profileResult.ok) {
+  const isLookup = profileResult.detail.startsWith("profile_lookup_failed");
+  const arabic = isLookup
+    ? "تعذّر التحقق من ملف المستخدم في قاعدة البيانات"
+    : "تعذّر إنشاء ملف المستخدم الجديد";
+  console.error("[tasks-create] ensureProfile failed:", profileResult);
+  return Response.json(
+    withDetails({ error: arabic }, profileResult.detail),
+    { status: profileResult.status >= 400 && profileResult.status < 600 ? profileResult.status : 500 },
+  );
+}
+```
+
+`withDetails` كما هو يُلحق `details` فقط حين `ALLOW_DEV_MODE === "true"`، فيرى المطوّر السبب الدقيق (`column "X" violates not-null constraint` مثلًا) بدون كشفه في الإنتاج.
+
+### 3) عدم تغيير المخطط
+
+- لا migrations.
+- لا تغيير على `tasks.owner_pi_uid` ولا على RLS.
+- لا تغيير على `src/routes/post-task.tsx` — يعرض بالفعل الرسالة العربية + `details` من الاستجابة.
 
 ## الملفات التي ستُعدَّل
 
 ```text
-src/routes/api.public.tasks-create.ts   (إعادة كتابة كاملة لمنطق الإدراج + رسائل عربية)
-src/lib/server/piVerify.ts              (ensureProfile تُعيد نتيجة بدل void)
-src/routes/post-task.tsx                (عرض details في dev + رسالة افتراضية عربية)
+src/lib/server/piVerify.ts              (إعادة كتابة ensureProfile: lookup → insert)
+src/routes/api.public.tasks-create.ts   (رسائل خطأ مفصّلة حسب نوع الفشل)
 ```
 
-## ما لن يتغير
+## كيف نتحقق
 
-- لا تعديل على المخطط (Schema) — العمود يبقى `owner_pi_uid`.
-- لا تغيير على RLS (`tasks` غير متأثر؛ نكتب بـ service-role).
-- لا تغيير على آلية مصادقة Pi نفسها.
-- لا حاجة لمايجرشن SQL.
-
-## كيف نتحقق بعد التطبيق
-
-1. تسجيل الدخول بحساب Pi حقيقي (أو تفعيل `ALLOW_DEV_MODE=true` في أسرار المشروع للاختبار بـ "مطور").
-2. نشر مهمة من `/post-task`.
-3. إن فشلت: ستظهر رسالة عربية محددة (مثلاً "تعذّر إنشاء ملف المستخدم") + التفاصيل الفنية في console الخادم (`stack_modern--server-function-logs`)، فنعرف بالضبط أي عمود/قيد هو السبب ونعالجه في خطوة لاحقة.
+1. تفعيل `ALLOW_DEV_MODE=true` مؤقتًا في أسرار المشروع.
+2. تسجيل الدخول كمطوّر ونشر مهمة:
+   - **النجاح**: تُنشأ صفحة المهمة وتُحفظ، ويُسجَّل في خادم `[ensureProfile] created profile for <uid>`.
+   - **الفشل**: تظهر رسالة عربية محددة + `details` تحدد العمود/القيد الذي تسبب بالفشل، فنعالجه فورًا.
+3. بعد التأكد، تعطيل `ALLOW_DEV_MODE` في الإنتاج.

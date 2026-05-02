@@ -125,12 +125,23 @@ export const Route = createFileRoute("/api/public/tasks-create")({
             username,
           });
           if (!profileResult.ok) {
+            const isLookup = profileResult.detail.startsWith(
+              "profile_lookup_failed",
+            );
+            const arabic = isLookup
+              ? "تعذّر التحقق من ملف المستخدم في قاعدة البيانات"
+              : "تعذّر إنشاء ملف المستخدم الجديد";
+            console.error(
+              "[tasks-create] ensureProfile failed:",
+              profileResult,
+            );
+            const status =
+              profileResult.status >= 400 && profileResult.status < 600
+                ? profileResult.status
+                : 500;
             return Response.json(
-              withDetails(
-                { error: "تعذّر إنشاء ملف المستخدم" },
-                profileResult.detail,
-              ),
-              { status: 500 },
+              withDetails({ error: arabic }, profileResult.detail),
+              { status },
             );
           }
 
