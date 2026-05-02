@@ -77,8 +77,15 @@ function PostTask() {
         }),
       });
       if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(body.error || `Failed (${res.status})`);
+        const body = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          details?: string;
+        };
+        const base = body.error || "تعذّر نشر المهمة";
+        // Show backend diagnostics only when the server includes them
+        // (server gates this behind ALLOW_DEV_MODE=true, so safe in prod).
+        const msg = body.details ? `${base} — ${body.details}` : base;
+        throw new Error(msg);
       }
       // Refresh listings so the new task appears immediately.
       await queryClient.invalidateQueries({ queryKey: ["tasks"] });
