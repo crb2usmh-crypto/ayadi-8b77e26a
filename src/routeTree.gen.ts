@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PostTaskRouteImport } from './routes/post-task'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
@@ -24,6 +25,7 @@ import { Route as ApiPublicTasksCompleteRouteImport } from './routes/api.public.
 import { Route as ApiPublicReviewsListRouteImport } from './routes/api.public.reviews-list'
 import { Route as ApiPublicReviewsForTaskRouteImport } from './routes/api.public.reviews-for-task'
 import { Route as ApiPublicReviewsCreateRouteImport } from './routes/api.public.reviews-create'
+import { Route as ApiPublicProfileUpdateRouteImport } from './routes/api.public.profile-update'
 import { Route as ApiPublicPiVerifyRouteImport } from './routes/api.public.pi-verify'
 import { Route as ApiPublicNotificationsRouteImport } from './routes/api.public.notifications'
 import { Route as ApiPublicMessagesSendRouteImport } from './routes/api.public.messages-send'
@@ -43,6 +45,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const PostTaskRoute = PostTaskRouteImport.update({
   id: '/post-task',
   path: '/post-task',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MessagesRoute = MessagesRouteImport.update({
@@ -110,6 +117,11 @@ const ApiPublicReviewsCreateRoute = ApiPublicReviewsCreateRouteImport.update({
   path: '/api/public/reviews-create',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicProfileUpdateRoute = ApiPublicProfileUpdateRouteImport.update({
+  id: '/api/public/profile-update',
+  path: '/api/public/profile-update',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPiVerifyRoute = ApiPublicPiVerifyRouteImport.update({
   id: '/api/public/pi-verify',
   path: '/api/public/pi-verify',
@@ -166,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/messages': typeof MessagesRouteWithChildren
+  '/onboarding': typeof OnboardingRoute
   '/post-task': typeof PostTaskRoute
   '/profile': typeof ProfileRoute
   '/messages/$conversationId': typeof MessagesConversationIdRoute
@@ -182,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/api/public/messages-send': typeof ApiPublicMessagesSendRoute
   '/api/public/notifications': typeof ApiPublicNotificationsRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
+  '/api/public/profile-update': typeof ApiPublicProfileUpdateRoute
   '/api/public/reviews-create': typeof ApiPublicReviewsCreateRoute
   '/api/public/reviews-for-task': typeof ApiPublicReviewsForTaskRoute
   '/api/public/reviews-list': typeof ApiPublicReviewsListRoute
@@ -192,6 +206,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/onboarding': typeof OnboardingRoute
   '/post-task': typeof PostTaskRoute
   '/profile': typeof ProfileRoute
   '/messages/$conversationId': typeof MessagesConversationIdRoute
@@ -208,6 +223,7 @@ export interface FileRoutesByTo {
   '/api/public/messages-send': typeof ApiPublicMessagesSendRoute
   '/api/public/notifications': typeof ApiPublicNotificationsRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
+  '/api/public/profile-update': typeof ApiPublicProfileUpdateRoute
   '/api/public/reviews-create': typeof ApiPublicReviewsCreateRoute
   '/api/public/reviews-for-task': typeof ApiPublicReviewsForTaskRoute
   '/api/public/reviews-list': typeof ApiPublicReviewsListRoute
@@ -220,6 +236,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/messages': typeof MessagesRouteWithChildren
+  '/onboarding': typeof OnboardingRoute
   '/post-task': typeof PostTaskRoute
   '/profile': typeof ProfileRoute
   '/messages/$conversationId': typeof MessagesConversationIdRoute
@@ -236,6 +253,7 @@ export interface FileRoutesById {
   '/api/public/messages-send': typeof ApiPublicMessagesSendRoute
   '/api/public/notifications': typeof ApiPublicNotificationsRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
+  '/api/public/profile-update': typeof ApiPublicProfileUpdateRoute
   '/api/public/reviews-create': typeof ApiPublicReviewsCreateRoute
   '/api/public/reviews-for-task': typeof ApiPublicReviewsForTaskRoute
   '/api/public/reviews-list': typeof ApiPublicReviewsListRoute
@@ -249,6 +267,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/messages'
+    | '/onboarding'
     | '/post-task'
     | '/profile'
     | '/messages/$conversationId'
@@ -265,6 +284,7 @@ export interface FileRouteTypes {
     | '/api/public/messages-send'
     | '/api/public/notifications'
     | '/api/public/pi-verify'
+    | '/api/public/profile-update'
     | '/api/public/reviews-create'
     | '/api/public/reviews-for-task'
     | '/api/public/reviews-list'
@@ -275,6 +295,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/onboarding'
     | '/post-task'
     | '/profile'
     | '/messages/$conversationId'
@@ -291,6 +312,7 @@ export interface FileRouteTypes {
     | '/api/public/messages-send'
     | '/api/public/notifications'
     | '/api/public/pi-verify'
+    | '/api/public/profile-update'
     | '/api/public/reviews-create'
     | '/api/public/reviews-for-task'
     | '/api/public/reviews-list'
@@ -302,6 +324,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/messages'
+    | '/onboarding'
     | '/post-task'
     | '/profile'
     | '/messages/$conversationId'
@@ -318,6 +341,7 @@ export interface FileRouteTypes {
     | '/api/public/messages-send'
     | '/api/public/notifications'
     | '/api/public/pi-verify'
+    | '/api/public/profile-update'
     | '/api/public/reviews-create'
     | '/api/public/reviews-for-task'
     | '/api/public/reviews-list'
@@ -330,6 +354,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   MessagesRoute: typeof MessagesRouteWithChildren
+  OnboardingRoute: typeof OnboardingRoute
   PostTaskRoute: typeof PostTaskRoute
   ProfileRoute: typeof ProfileRoute
   TasksTaskIdRoute: typeof TasksTaskIdRoute
@@ -344,6 +369,7 @@ export interface RootRouteChildren {
   ApiPublicMessagesSendRoute: typeof ApiPublicMessagesSendRoute
   ApiPublicNotificationsRoute: typeof ApiPublicNotificationsRoute
   ApiPublicPiVerifyRoute: typeof ApiPublicPiVerifyRoute
+  ApiPublicProfileUpdateRoute: typeof ApiPublicProfileUpdateRoute
   ApiPublicReviewsCreateRoute: typeof ApiPublicReviewsCreateRoute
   ApiPublicReviewsForTaskRoute: typeof ApiPublicReviewsForTaskRoute
   ApiPublicReviewsListRoute: typeof ApiPublicReviewsListRoute
@@ -366,6 +392,13 @@ declare module '@tanstack/react-router' {
       path: '/post-task'
       fullPath: '/post-task'
       preLoaderRoute: typeof PostTaskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/messages': {
@@ -459,6 +492,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicReviewsCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/profile-update': {
+      id: '/api/public/profile-update'
+      path: '/api/public/profile-update'
+      fullPath: '/api/public/profile-update'
+      preLoaderRoute: typeof ApiPublicProfileUpdateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/pi-verify': {
       id: '/api/public/pi-verify'
       path: '/api/public/pi-verify'
@@ -550,6 +590,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   MessagesRoute: MessagesRouteWithChildren,
+  OnboardingRoute: OnboardingRoute,
   PostTaskRoute: PostTaskRoute,
   ProfileRoute: ProfileRoute,
   TasksTaskIdRoute: TasksTaskIdRoute,
@@ -564,6 +605,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMessagesSendRoute: ApiPublicMessagesSendRoute,
   ApiPublicNotificationsRoute: ApiPublicNotificationsRoute,
   ApiPublicPiVerifyRoute: ApiPublicPiVerifyRoute,
+  ApiPublicProfileUpdateRoute: ApiPublicProfileUpdateRoute,
   ApiPublicReviewsCreateRoute: ApiPublicReviewsCreateRoute,
   ApiPublicReviewsForTaskRoute: ApiPublicReviewsForTaskRoute,
   ApiPublicReviewsListRoute: ApiPublicReviewsListRoute,
