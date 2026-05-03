@@ -321,11 +321,13 @@ export function filterTasks(
   tasks: TaskWithOwner[],
   query: string,
   category: CategoryFilter,
+  countryFilter?: string | null,
 ): TaskWithOwner[] {
   const q = query.trim().toLowerCase();
   return tasks.filter((task) => {
     const inCategory = category === "all" || task.category === category;
     if (!inCategory) return false;
+    if (countryFilter && task.country !== countryFilter) return false;
     if (!q) return true;
     return (
       task.title.toLowerCase().includes(q) ||
