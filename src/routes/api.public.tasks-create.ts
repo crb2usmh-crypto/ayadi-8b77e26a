@@ -5,6 +5,7 @@ import {
   adminHeaders,
   ensureProfile,
 } from "@/lib/server/piVerify";
+import { isValidCountryCode } from "@/lib/data/countries";
 
 /**
  * Creates a new task on behalf of the authenticated Pi user.
@@ -84,6 +85,10 @@ export const Route = createFileRoute("/api/public/tasks-create")({
         const budget = Number.isFinite(budgetNum) && budgetNum >= 0 ? budgetNum : 0;
         const location = clampStr(t.location, 200);
         const deadline = clampStr(t.deadline, 200);
+        const country =
+          typeof t.country === "string" && isValidCountryCode(t.country)
+            ? t.country
+            : null;
 
         if (!title || !description) {
           return Response.json(
@@ -157,6 +162,7 @@ export const Route = createFileRoute("/api/public/tasks-create")({
           if (location) taskRow.location = location;
           if (deadline) taskRow.deadline = deadline;
           if (title) taskRow.image_seed = title.slice(0, 32);
+          if (country) taskRow.country = country;
 
           const insertRes = await fetch(`${env.url}/rest/v1/tasks`, {
             method: "POST",
