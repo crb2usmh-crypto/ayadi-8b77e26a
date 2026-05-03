@@ -41,6 +41,19 @@ export function AppHeader() {
     } catch {
       // ignore
     }
+    // Persist preference for signed-in users (best-effort).
+    if (session?.accessToken) {
+      void fetch("/api/public/profile-update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accessToken: session.accessToken,
+          profile: { preferred_lang: next },
+        }),
+      }).catch(() => {
+        // Silent: language already switched locally.
+      });
+    }
   };
 
   const handleLogoTap = (e: React.MouseEvent) => {
