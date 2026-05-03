@@ -20,6 +20,10 @@ import { usePiAuth } from "@/components/providers/PiAuthProvider";
 import { CATEGORY_KEYS } from "@/lib/supabase/types";
 import { fireConfetti } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { profileQueryOptions } from "@/lib/supabase/queries";
+import { COUNTRIES } from "@/lib/data/countries";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/post-task")({
   head: () => ({
@@ -32,10 +36,12 @@ export const Route = createFileRoute("/post-task")({
 });
 
 function PostTask() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { session } = usePiAuth();
+  const piUid = session?.user.uid ?? null;
+  const { data: profile } = useQuery(profileQueryOptions(piUid));
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
@@ -45,7 +51,18 @@ function PostTask() {
     budget: "",
     location: "",
     deadline: "",
+    country: "",
   });
+
+  // Default country from user's profile.
+  useEffect(() => {
+    if (profile?.country && !form.country) {
+      setForm((p) => ({ ...p, country: profile.country! }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.country]);
+
+  const isAr = i18n.language === "ar";
 
   const totalSteps = 3;
   const update = (k: keyof typeof form, v: string) => setForm((p) => ({ ...p, [k]: v }));
@@ -73,6 +90,7 @@ function PostTask() {
             budget: Number(form.budget) || 0,
             location: form.location,
             deadline: form.deadline,
+            country: form.country || undefined,
           },
         }),
       });
@@ -206,6 +224,23 @@ function PostTask() {
                       placeholder={t("post.locationPh")}
                       className="h-12 rounded-xl"
                     />
+                  </Field>
+                  <Field label={t("post.country")}>
+                    <Select
+                      value={form.country}
+                      onValueChange={(v) => update("country", v)}
+                    >
+                      <SelectTrigger className="h-12 rounded-xl">
+                        <SelectValue placeholder={t("post.country")} />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {COUNTRIES.map((c) => (
+                          <SelectItem key={c.code} value={c.code}>
+                            {isAr ? c.ar : c.en}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </Field>
                   <Field label={t("task.deadline")}>
                     <Input

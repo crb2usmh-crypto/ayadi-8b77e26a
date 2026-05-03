@@ -41,7 +41,9 @@
     "browseTasks": "Browse tasks",
     "categories": "Categories",
     "featured": "Featured tasks",
-    "latest": "Latest tasks"
+    "latest": "Latest tasks",
+    "allCountries": "Showing all countries",
+    "myCountry": "My country"
   },
   "categories": {
     "all": "All",
@@ -118,7 +120,8 @@
     "locationPh": "Riyadh, Al Nakheel district",
     "deadlinePh": "Within 7 days",
     "publishTask": "Publish task",
-    "published": "Your task has been published! 🎉"
+    "published": "Your task has been published! 🎉",
+    "country": "Country"
   },
   "profile": {
     "title": "My profile",
@@ -191,5 +194,17 @@
     "loginRequired": "Sign in with Pi to start mining Ayadi token",
     "historyTitle": "Recent mining",
     "historyEmpty": "No mining activity yet"
+  },
+  "onboarding": {
+    "title": "Complete your profile",
+    "subtitle": "We need a few details to finish setting up your Ayadi account",
+    "fullName": "Full name",
+    "email": "Email",
+    "address": "Full address",
+    "country": "Country",
+    "save": "Save and continue",
+    "success": "Profile saved ✅",
+    "fieldRequired": "All fields are required",
+    "saveFailed": "Could not save your details"
   }
 }

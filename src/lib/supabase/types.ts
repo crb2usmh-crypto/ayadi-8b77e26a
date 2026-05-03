@@ -31,6 +31,13 @@ export interface ProfileRow {
   published_tasks: number;
   created_at: string;
   updated_at: string;
+  // Onboarding fields (added in 2026-05-03 migration).
+  full_name: string | null;
+  email: string | null;
+  address: string | null;
+  country: string | null;
+  preferred_lang: string | null;
+  onboarded_at: string | null;
 }
 
 export interface TaskRow {
@@ -56,6 +63,8 @@ export interface TaskRow {
   accepted_bid_id: string | null;
   /** pi_uid of the freelancer who got the task. */
   assignee_pi_uid: string | null;
+  /** ISO-2 country code of the task owner at posting time. */
+  country: string | null;
 }
 
 /** Task joined with its owner profile (returned by list/detail queries). */
