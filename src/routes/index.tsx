@@ -12,6 +12,11 @@ import { AyadiMiner } from "@/components/common/AyadiMiner";
 import { tasksQueryOptions, filterTasks } from "@/lib/supabase/queries";
 import { CATEGORY_KEYS, type TaskCategory } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { profileQueryOptions } from "@/lib/supabase/queries";
+import { usePiAuth } from "@/components/providers/PiAuthProvider";
+import { getCountryName } from "@/lib/data/countries";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -30,12 +35,18 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { session } = usePiAuth();
+  const piUid = session?.user.uid ?? null;
+  const { data: profile } = useQuery(profileQueryOptions(piUid));
+  const userCountry = profile?.country ?? null;
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<TaskCategory | "all">("all");
+  const [showAllCountries, setShowAllCountries] = useState(false);
   const { data: tasks = [], isLoading, error } = useQuery(tasksQueryOptions());
 
-  const filtered = filterTasks(tasks, query, activeCategory);
+  const countryFilter = !showAllCountries && userCountry ? userCountry : null;
+  const filtered = filterTasks(tasks, query, activeCategory, countryFilter);
   const featured = tasks.filter((task) => task.featured);
 
   return (
@@ -111,6 +122,23 @@ function HomePage() {
               />
             ))}
           </div>
+          {userCountry && (
+            <div className="mt-4 flex items-center justify-between rounded-2xl glass-card px-4 py-3">
+              <Label
+                htmlFor="all-countries"
+                className="text-sm font-medium cursor-pointer"
+              >
+                {showAllCountries
+                  ? t("home.allCountries")
+                  : `${t("home.myCountry")}: ${getCountryName(userCountry, i18n.language === "ar" ? "ar" : "en")}`}
+              </Label>
+              <Switch
+                id="all-countries"
+                checked={showAllCountries}
+                onCheckedChange={setShowAllCountries}
+              />
+            </div>
+          )}
         </section>
 
         {/* Featured */}
