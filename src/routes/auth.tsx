@@ -17,22 +17,24 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { isPiBrowser, isDevModeAllowed, session, loading, error, login, loginAsDev } = usePiAuth();
+  const { isPiBrowser, isDevModeAllowed, session, bootstrapping, loading, error, login, loginAsDev } = usePiAuth();
   const tapCountRef = useRef(0);
   const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // If already signed in, bounce to home.
+  // Once authenticated, AppShell decides where to send the user
+  // (onboarding vs home). We just bounce off /auth.
   useEffect(() => {
-    if (session) {
-      navigate({ to: "/" });
+    if (!bootstrapping && session) {
+      navigate({ to: "/", replace: true });
     }
-  }, [session, navigate]);
+  }, [session, bootstrapping, navigate]);
 
   const handleLogin = async () => {
     try {
       await login(["username"]);
       toast.success(t("auth.loginSuccess"));
-      navigate({ to: "/" });
+      // AppShell's onboarding gate will route to /onboarding or / as needed.
+      navigate({ to: "/", replace: true });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("auth.error"));
     }
@@ -50,7 +52,7 @@ function AuthPage() {
       if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
       loginAsDev();
       toast.success("Developer Mode — تم تسجيل الدخول كمطور");
-      navigate({ to: "/" });
+      navigate({ to: "/", replace: true });
     }
   };
 
