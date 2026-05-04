@@ -128,36 +128,36 @@ function TaskDetail() {
   );
 
   const createBid = useMutation({
-    mutationFn: async () => {
-      if (!session) throw new Error(t("task.loginToBid"));
-      const res = await fetch("/api/public/bids-create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          accessToken: session.accessToken,
-          taskId: task.id,
-          amount: Number(amount),
-          message: message.trim() || undefined,
-        }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || `Failed (${res.status})`);
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      setOpen(false);
-      setMessage("");
-      fireConfetti();
-      toast.success(t("task.offerSent"));
-      queryClient.invalidateQueries({ queryKey: ["bids", task.id] });
-      router.invalidate();
-    },
-    onError: (err: Error) => {
-      toast.error(err.message);
-    },
-  });
+  mutationFn: async () => {
+    if (!session) throw new Error(t("task.loginToBid"));
+    const res = await fetch("/api/public/bids-create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        accessToken: session.accessToken,
+        taskId: String(task.id),        // ← تم إضافة String() هنا
+        amount: Number(amount),
+        message: message.trim() || undefined,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error || `Failed (${res.status})`);
+    }
+    return res.json();
+  },
+  onSuccess: () => {
+    setOpen(false);
+    setMessage("");
+    fireConfetti();
+    toast.success(t("task.offerSent"));
+    queryClient.invalidateQueries({ queryKey: ["bids", task.id] });
+    router.invalidate();
+  },
+  onError: (err: Error) => {
+    toast.error(err.message);
+  },
+});
 
   const handleSubmitOffer = (e: React.FormEvent) => {
     e.preventDefault();
