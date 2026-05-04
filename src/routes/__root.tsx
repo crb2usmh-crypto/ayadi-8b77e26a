@@ -79,8 +79,8 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       { name: "description", content: "Ayadi أيادي is a decentralized mini-job marketplace app." },
       { property: "og:description", content: "Ayadi أيادي is a decentralized mini-job marketplace app." },
       { name: "twitter:description", content: "Ayadi أيادي is a decentralized mini-job marketplace app." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/dq87gVW9Y5b6oIarEJ2kBivYq6o1/social-images/social-1777117539136-file_000000004e00722fad4e3ac41a93c7e1.webp" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/dq87gVW9Y5b6oIarEJ2kBivYq6o1/social-images/social-1777117539136-file_000000004e00722fad4e3ac41a93c7e1.webp" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/dq87gVW9Y5b6oIarEJ2kBivYq6o1/social-images/social-1777857239270-1000639727.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/dq87gVW9Y5b6oIarEJ2kBivYq6o1/social-images/social-1777857239270-1000639727.webp" },
     ],
     links: [
       {
