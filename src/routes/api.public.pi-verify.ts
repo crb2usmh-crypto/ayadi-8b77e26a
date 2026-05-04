@@ -1,27 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
+import {
+  adminHeaders,
+  getSupabaseAdminEnv,
+} from "@/lib/server/piVerify";
+import type { ProfileRow } from "@/lib/supabase/types";
 
-/**
- * Verifies a Pi Network access token by calling the official Pi Platform API,
- * then upserts the user into the `profiles` table (if Supabase service-role
- * credentials are configured on the server).
- *
- * Body: { accessToken: string }
- * Success: 200 { uid, username, profile? }
- * Failure: 401 invalid token | 400 bad input | 500 server/upstream error
- *
- * Required `profiles` table columns (when persistence is enabled):
- *   id          uuid primary key default gen_random_uuid()
- *   pi_uid      text unique not null
- *   username    text not null
- *   created_at  timestamptz default now()
- *   updated_at  timestamptz default now()
- */
 export const Route = createFileRoute("/api/public/pi-verify")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        // ---- 1. Parse & validate input -----------------------------------
-        let body: { accessToken?: unknown };
+        let body: { accessToken?: unknown; user?: unknown };
         try {
           body = await request.json();
         } catch {
@@ -30,100 +18,73 @@ export const Route = createFileRoute("/api/public/pi-verify")({
 
         const accessToken =
           typeof body.accessToken === "string" ? body.accessToken.trim() : "";
-        if (!accessToken || accessToken.length > 4096) {
-          return Response.json({ error: "Authentication required" }, { status: 400 });
+        if (!accessToken) {
+          return Response.json({ error: "Missing access token" }, { status: 400 });
         }
 
-        // Developer Mode short-circuit (only honored when explicitly enabled).
-        if (accessToken === "dev-mode-token") {
-          if (process.env.ALLOW_DEV_MODE === "true") {
-            return Response.json({
-              uid: "dev-user-uid",
-              username: "مطور",
-              profile: null,
-            });
-          }
-          return Response.json({ error: "Authentication failed" }, { status: 401 });
+        const userObj = body.user as any;
+        const piUid = userObj?.uid as string | undefined;
+        const username = userObj?.username as string | undefined;
+
+        if (!piUid) {
+          return Response.json({ error: "Missing user.uid" }, { status: 400 });
         }
 
-        // ---- 2. Verify with Pi Platform ----------------------------------
-        let me: { uid: string; username: string };
+        const env = getSupabaseAdminEnv();
+        if (!env) {
+          return Response.json({ error: "Service temporarily unavailable" }, { status: 500 });
+        }
+
         try {
+          // التحقق من Pi Token
           const piRes = await fetch("https://api.minepi.com/v2/me", {
-            method: "GET",
             headers: { Authorization: `Bearer ${accessToken}` },
           });
-
-          if (piRes.status === 401) {
-            return Response.json({ error: "Authentication failed" }, { status: 401 });
-          }
           if (!piRes.ok) {
-            console.error("[pi-verify] upstream:", piRes.status);
-            return Response.json(
-              { error: "Authentication service unavailable" },
-              { status: 502 },
-            );
+            return Response.json({ error: "Invalid Pi access token" }, { status: 401 });
           }
 
-          const json = (await piRes.json()) as { uid?: string; username?: string };
-          if (!json?.uid || !json?.username) {
-            return Response.json({ error: "Authentication service unavailable" }, { status: 502 });
-          }
-          me = { uid: json.uid, username: json.username };
-        } catch (err) {
-          console.error("[pi-verify] error:", err);
-          return Response.json({ error: "Authentication failed" }, { status: 500 });
-        }
+          // التحقق من وجود الملف الشخصي
+          const profileReq = await fetch(
+            `${env.url}/rest/v1/profiles?pi_uid=eq.${encodeURIComponent(piUid)}&select=*`,
+            { headers: adminHeaders(env) },
+          );
+          const profiles = (await profileReq.json()) as ProfileRow[];
 
-        // ---- 3. Persist to `profiles` (best-effort) ----------------------
-        const supabaseUrl = process.env.SUPABASE_URL;
-        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-        let profile: unknown = null;
-        if (supabaseUrl && serviceKey) {
-          try {
-            // Upsert by pi_uid using PostgREST. `Prefer: resolution=merge-duplicates`
-            // requires a unique/PK constraint on the conflict target columns.
-            const upsertRes = await fetch(
-              `${supabaseUrl}/rest/v1/profiles?on_conflict=pi_uid`,
+          if (!Array.isArray(profiles) || profiles.length === 0) {
+            // إنشاء ملف شخصي جديد
+            const insertReq = await fetch(
+              `${env.url}/rest/v1/profiles`,
               {
                 method: "POST",
                 headers: {
+                  ...adminHeaders(env),
                   "Content-Type": "application/json",
-                  apikey: serviceKey,
-                  Authorization: `Bearer ${serviceKey}`,
-                  Prefer: "return=representation,resolution=merge-duplicates",
+                  "Prefer": "return=representation",
                 },
-                body: JSON.stringify([
-                  {
-                    pi_uid: me.uid,
-                    username: me.username,
-                    updated_at: new Date().toISOString(),
-                  },
-                ]),
+                body: JSON.stringify({
+                  pi_uid: piUid,
+                  username: username || piUid,
+                  full_name: username || piUid,
+                  rating: 0,
+                  balance: 0,
+                }),
               },
             );
-
-            if (upsertRes.ok) {
-              const rows = (await upsertRes.json()) as unknown[];
-              profile = Array.isArray(rows) ? rows[0] ?? null : null;
-            } else {
-              const detail = await upsertRes.text();
-              console.error("[pi-verify] profile upsert failed:", upsertRes.status, detail);
+            if (!insertReq.ok) {
+              const errText = await insertReq.text();
+              console.error("[pi-verify] profile insert failed:", errText);
+              return Response.json({ error: "تعذر إنشاء ملف المستخدم" }, { status: 500 });
             }
-          } catch (err) {
-            // Don't fail authentication just because persistence failed —
-            // the user's identity is already verified by Pi.
-            console.error("[pi-verify] profile upsert error:", err);
+            const [newProfile] = (await insertReq.json()) as ProfileRow[];
+            return Response.json({ verified: true, profile: newProfile });
           }
-        } else {
-          console.warn(
-            "[pi-verify] Skipping profile upsert: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set.",
-          );
-        }
 
-        // ---- 4. Respond --------------------------------------------------
-        return Response.json({ uid: me.uid, username: me.username, profile });
+          return Response.json({ verified: true, profile: profiles[0] });
+        } catch (err) {
+          console.error("[pi-verify] error:", err);
+          return Response.json({ error: "Server error" }, { status: 500 });
+        }
       },
     },
   },
