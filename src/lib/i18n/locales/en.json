@@ -167,7 +167,9 @@
     "piReason2": "Access to your Pi wallet for in-app payments.",
     "piReason3": "A seamless experience — no extra accounts or passwords.",
     "openInPi": "Open in Pi Browser",
-    "piHelpText": "Don't have Pi Browser yet? Download it from your app store and sign in with your Pi account."
+    "piHelpText": "Don't have Pi Browser yet? Download it from your app store and sign in with your Pi account.",
+    "checkingSession": "Checking your session...",
+    "sessionExpired": "Your session has expired. Please sign in again."
   },
   "review": {
     "title": "Review",
