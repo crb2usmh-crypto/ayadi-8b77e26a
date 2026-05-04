@@ -9,7 +9,7 @@ export const Route = createFileRoute("/api/public/bids-create")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        let body: { taskId?: unknown; amount?: unknown; message?: unknown };
+        let body: { taskId?: unknown; amount?: unknown; message?: unknown; bidderPiUid?: unknown };
         try {
           body = await request.json();
         } catch {
@@ -25,6 +25,12 @@ export const Route = createFileRoute("/api/public/bids-create")({
         const amountNum = Number(body.amount);
         if (!Number.isFinite(amountNum) || amountNum <= 0) {
           return Response.json({ error: "المبلغ غير صالح" }, { status: 400 });
+        }
+
+        const bidderPiUid =
+          typeof body.bidderPiUid === "string" ? body.bidderPiUid.trim() : "";
+        if (!bidderPiUid || bidderPiUid.length > 256) {
+          return Response.json({ error: "معرف مقدم العرض غير صالح" }, { status: 400 });
         }
 
         const message =
@@ -60,7 +66,8 @@ export const Route = createFileRoute("/api/public/bids-create")({
                 "Prefer": "return=representation",
               },
               body: JSON.stringify({
-                task_id: taskId,
+                task_id: Number(taskId),
+                bidder_id: bidderPiUid,
                 amount: amountNum,
                 message: message,
                 status: "pending",
