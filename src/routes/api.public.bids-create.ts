@@ -55,7 +55,7 @@ export const Route = createFileRoute("/api/public/bids-create")({
             return Response.json({ error: "المهمة ليست مفتوحة لتلقي العروض" }, { status: 400 });
           }
 
-          // إنشاء العرض
+          // إنشاء العرض باستخدام bidder_pi_uid بدلاً من bidder_id
           const insertReq = await fetch(
             `${env.url}/rest/v1/bids`,
             {
@@ -67,7 +67,7 @@ export const Route = createFileRoute("/api/public/bids-create")({
               },
               body: JSON.stringify({
                 task_id: Number(taskId),
-                bidder_id: bidderPiUid,
+                bidder_pi_uid: bidderPiUid,
                 amount: amountNum,
                 message: message,
                 status: "pending",
