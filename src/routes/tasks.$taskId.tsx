@@ -134,11 +134,12 @@ function TaskDetail() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        accessToken: session.accessToken,
-        taskId: String(task.id),        // ← تم إضافة String() هنا
-        amount: Number(amount),
-        message: message.trim() || undefined,
-      }),
+  accessToken: session.accessToken,
+  taskId: String(task.id),
+  bidderPiUid: session.user.uid,   // ← تأكد من وجود هذا السطر
+  amount: Number(amount),
+  message: message.trim() || undefined,
+}),
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
