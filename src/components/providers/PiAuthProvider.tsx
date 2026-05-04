@@ -30,6 +30,8 @@ interface PiAuthContextValue {
   isPiBrowser: boolean;
   isDevModeAllowed: boolean;
   session: PiSession | null;
+  /** True while we validate any persisted session against the server. */
+  bootstrapping: boolean;
   loading: boolean;
   error: string | null;
   login: (scopes?: PiScope[]) => Promise<void>;
@@ -62,6 +64,12 @@ function saveSession(session: PiSession | null) {
 export function PiAuthProvider({ children }: { children: ReactNode }) {
   const [isPiBrowser, setIsPiBrowser] = useState(false);
   const [session, setSession] = useState<PiSession | null>(null);
+  // Start bootstrapping ONLY if a persisted session exists; otherwise we know
+  // immediately that the user is unauthenticated and the auth gate can fire.
+  const [bootstrapping, setBootstrapping] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return !!window.localStorage.getItem(STORAGE_KEY);
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -84,7 +92,57 @@ export function PiAuthProvider({ children }: { children: ReactNode }) {
     setIsPiBrowser(detectPiBrowser());
     // sandbox=true only outside production; sandbox=false in published prod app.
     initPi(isDevModeAllowed);
-    setSession(loadSession());
+
+    const stored = loadSession();
+    if (!stored) {
+      setSession(null);
+      setBootstrapping(false);
+      return;
+    }
+
+    // Dev-mode token is a local fixture — no server validation possible.
+    if (stored.accessToken === "dev-mode-token") {
+      if (isDevModeAllowed) {
+        setSession(stored);
+      } else {
+        // Dev session lingering in production-like env — drop it.
+        saveSession(null);
+        setSession(null);
+      }
+      setBootstrapping(false);
+      return;
+    }
+
+    // Validate persisted Pi access token against the server.
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/public/pi-verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ accessToken: stored.accessToken }),
+        });
+        if (cancelled) return;
+        if (!res.ok) {
+          // Token rejected by Pi — clear and force re-login.
+          saveSession(null);
+          setSession(null);
+          setError("sessionExpired");
+        } else {
+          setSession(stored);
+        }
+      } catch {
+        // Network failure: keep the session optimistically (offline tolerance)
+        // but the next protected server call will re-verify.
+        if (!cancelled) setSession(stored);
+      } finally {
+        if (!cancelled) setBootstrapping(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [isDevModeAllowed]);
 
   const login = useCallback(async (scopes: PiScope[] = ["username"]) => {
@@ -142,8 +200,8 @@ export function PiAuthProvider({ children }: { children: ReactNode }) {
   }, [isDevModeAllowed]);
 
   const value = useMemo<PiAuthContextValue>(
-    () => ({ isPiBrowser, isDevModeAllowed, session, loading, error, login, loginAsDev, logout }),
-    [isPiBrowser, isDevModeAllowed, session, loading, error, login, loginAsDev, logout],
+    () => ({ isPiBrowser, isDevModeAllowed, session, bootstrapping, loading, error, login, loginAsDev, logout }),
+    [isPiBrowser, isDevModeAllowed, session, bootstrapping, loading, error, login, loginAsDev, logout],
   );
 
   return <PiAuthContext.Provider value={value}>{children}</PiAuthContext.Provider>;
