@@ -43,7 +43,8 @@ export const Route = createFileRoute("/api/public/reviews-list")({
             `${env.url}/rest/v1/reviews?reviewee_pi_uid=eq.${encodeURIComponent(revieweePiUid)}&select=rating`,
             { headers: adminHeaders(env) },
           );
-          const aggRows = (await aggRes.json()) as Array<{ rating: number }>;
+          const rawAgg = await aggRes.json();
+          const aggRows = Array.isArray(rawAgg) ? (rawAgg as Array<{ rating: number }>) : [];
           const count = aggRows.length;
           const average =
             count === 0
@@ -58,7 +59,8 @@ export const Route = createFileRoute("/api/public/reviews-list")({
               `&select=*&order=created_at.desc&limit=${limit}`,
             { headers: adminHeaders(env) },
           );
-          const reviewRows = (await listRes.json()) as ReviewRow[];
+          const rawList = await listRes.json();
+          const reviewRows = Array.isArray(rawList) ? (rawList as ReviewRow[]) : [];
 
           // Attach reviewer profiles.
           const uids = Array.from(new Set(reviewRows.map((r) => r.reviewer_pi_uid)));
@@ -69,7 +71,8 @@ export const Route = createFileRoute("/api/public/reviews-list")({
               `${env.url}/rest/v1/profiles?pi_uid=in.(${encodeURIComponent(inList)})&select=*`,
               { headers: adminHeaders(env) },
             );
-            const profs = (await profRes.json()) as ProfileRow[];
+            const rawProfs = await profRes.json();
+            const profs = Array.isArray(rawProfs) ? (rawProfs as ProfileRow[]) : [];
             profMap = new Map(profs.map((p) => [p.pi_uid, p]));
           }
 
