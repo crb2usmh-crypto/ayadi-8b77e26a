@@ -250,4 +250,4 @@ export const Route = createFileRoute("/api/public/profile-update")({
       },
     },
   },
-});
+} as any);

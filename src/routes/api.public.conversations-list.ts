@@ -55,4 +55,4 @@ export const Route = createFileRoute("/api/public/conversations-list")({
       },
     },
   },
-});
+} as any);

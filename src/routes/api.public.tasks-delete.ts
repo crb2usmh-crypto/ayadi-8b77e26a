@@ -136,4 +136,4 @@ export const Route = createFileRoute("/api/public/tasks-delete")({
       },
     },
   },
-});
+} as any);

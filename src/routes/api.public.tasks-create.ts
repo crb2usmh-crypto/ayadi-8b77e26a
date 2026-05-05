@@ -200,4 +200,4 @@ export const Route = createFileRoute("/api/public/tasks-create")({
       },
     },
   },
-});
+} as any);

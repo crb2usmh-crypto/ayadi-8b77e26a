@@ -98,4 +98,4 @@ export const Route = createFileRoute("/api/public/ayadi-balance")({
       },
     },
   },
-});
+} as any);

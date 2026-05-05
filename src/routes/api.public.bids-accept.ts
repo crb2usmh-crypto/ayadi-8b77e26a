@@ -168,4 +168,4 @@ export const Route = createFileRoute("/api/public/bids-accept")({
       },
     },
   },
-});
+} as any);

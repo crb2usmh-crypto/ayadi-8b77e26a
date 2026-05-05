@@ -90,4 +90,4 @@ export const Route = createFileRoute("/api/public/reviews-list")({
       },
     },
   },
-});
+} as any);

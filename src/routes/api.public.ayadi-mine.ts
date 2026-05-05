@@ -156,4 +156,4 @@ export const Route = createFileRoute("/api/public/ayadi-mine")({
       },
     },
   },
-});
+} as any);
