@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowLeft, MapPin, Clock, Users, Wallet, Star, CheckCircle2, Inbox, Loader2, MessageCircle, Flag } from "lucide-react";
+import { ArrowLeft, MapPin, Clock, Users, Wallet, Star, CheckCircle2, Inbox, Loader2, MessageCircle, Flag, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -265,6 +265,11 @@ function TaskDetail() {
               <span className="text-muted-foreground">{t("task.taskStatus." + task.status)}</span>
             </div>
 
+            {/* Owner-only actions: edit + delete (open status only) */}
+            {isLoggedIn && isOwner && task.status === "open" && (
+              <OwnerActions taskId={task.id} accessToken={session!.accessToken} />
+            )}
+
             {/* Complete-task button — owner-only, in_progress only */}
             {isLoggedIn && isOwner && task.status === "in_progress" && (
               <CompleteTaskButton taskId={task.id} accessToken={session!.accessToken} />
@@ -388,6 +393,94 @@ function TaskDetail() {
         </div>
       </div>
     </PageTransition>
+  );
+}
+
+// ---------- Owner actions: edit + delete ----------
+
+function OwnerActions({
+  taskId,
+  accessToken,
+}: {
+  taskId: string;
+  accessToken: string;
+}) {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const del = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/public/tasks-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accessToken, taskId }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Failed (${res.status})`);
+      }
+      return res.json();
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success(t("task.deleteSuccess"));
+      router.navigate({ to: "/" });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  return (
+    <div className="space-y-2">
+      <Link to="/tasks/$taskId/edit" params={{ taskId }}>
+        <Button
+          size="lg"
+          variant="outline"
+          className="w-full rounded-full"
+        >
+          <Pencil className="me-2 size-4" />
+          {t("task.editTask")}
+        </Button>
+      </Link>
+
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button
+            size="lg"
+            variant="destructive"
+            disabled={del.isPending}
+            className="w-full rounded-full"
+          >
+            {del.isPending ? (
+              <>
+                <Loader2 className="me-2 size-4 animate-spin" />
+                {t("common.delete")}
+              </>
+            ) : (
+              <>
+                <Trash2 className="me-2 size-4" />
+                {t("task.deleteTask")}
+              </>
+            )}
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent className="glass-card border-0">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("task.deleteConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("task.deleteConfirmDesc")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-full">{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => del.mutate()}
+              className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("common.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 }
 

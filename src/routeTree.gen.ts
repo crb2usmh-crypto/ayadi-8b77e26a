@@ -19,6 +19,7 @@ import { Route as TasksIndexRouteImport } from './routes/tasks.index'
 import { Route as MessagesIndexRouteImport } from './routes/messages.index'
 import { Route as TasksTaskIdRouteImport } from './routes/tasks.$taskId'
 import { Route as MessagesConversationIdRouteImport } from './routes/messages.$conversationId'
+import { Route as TasksTaskIdEditRouteImport } from './routes/tasks.$taskId.edit'
 import { Route as ApiPublicValidationKeyRouteImport } from './routes/api.public.validation-key'
 import { Route as ApiPublicTasksUpdateRouteImport } from './routes/api.public.tasks-update'
 import { Route as ApiPublicTasksDeleteRouteImport } from './routes/api.public.tasks-delete'
@@ -88,6 +89,11 @@ const MessagesConversationIdRoute = MessagesConversationIdRouteImport.update({
   id: '/$conversationId',
   path: '/$conversationId',
   getParentRoute: () => MessagesRoute,
+} as any)
+const TasksTaskIdEditRoute = TasksTaskIdEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => TasksTaskIdRoute,
 } as any)
 const ApiPublicValidationKeyRoute = ApiPublicValidationKeyRouteImport.update({
   id: '/api/public/validation-key',
@@ -194,7 +200,7 @@ export interface FileRoutesByFullPath {
   '/post-task': typeof PostTaskRoute
   '/profile': typeof ProfileRoute
   '/messages/$conversationId': typeof MessagesConversationIdRoute
-  '/tasks/$taskId': typeof TasksTaskIdRoute
+  '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/messages/': typeof MessagesIndexRoute
   '/tasks/': typeof TasksIndexRoute
   '/api/public/ayadi-balance': typeof ApiPublicAyadiBalanceRoute
@@ -216,6 +222,7 @@ export interface FileRoutesByFullPath {
   '/api/public/tasks-delete': typeof ApiPublicTasksDeleteRoute
   '/api/public/tasks-update': typeof ApiPublicTasksUpdateRoute
   '/api/public/validation-key': typeof ApiPublicValidationKeyRoute
+  '/tasks/$taskId/edit': typeof TasksTaskIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -224,7 +231,7 @@ export interface FileRoutesByTo {
   '/post-task': typeof PostTaskRoute
   '/profile': typeof ProfileRoute
   '/messages/$conversationId': typeof MessagesConversationIdRoute
-  '/tasks/$taskId': typeof TasksTaskIdRoute
+  '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/messages': typeof MessagesIndexRoute
   '/tasks': typeof TasksIndexRoute
   '/api/public/ayadi-balance': typeof ApiPublicAyadiBalanceRoute
@@ -246,6 +253,7 @@ export interface FileRoutesByTo {
   '/api/public/tasks-delete': typeof ApiPublicTasksDeleteRoute
   '/api/public/tasks-update': typeof ApiPublicTasksUpdateRoute
   '/api/public/validation-key': typeof ApiPublicValidationKeyRoute
+  '/tasks/$taskId/edit': typeof TasksTaskIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -256,7 +264,7 @@ export interface FileRoutesById {
   '/post-task': typeof PostTaskRoute
   '/profile': typeof ProfileRoute
   '/messages/$conversationId': typeof MessagesConversationIdRoute
-  '/tasks/$taskId': typeof TasksTaskIdRoute
+  '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/messages/': typeof MessagesIndexRoute
   '/tasks/': typeof TasksIndexRoute
   '/api/public/ayadi-balance': typeof ApiPublicAyadiBalanceRoute
@@ -278,6 +286,7 @@ export interface FileRoutesById {
   '/api/public/tasks-delete': typeof ApiPublicTasksDeleteRoute
   '/api/public/tasks-update': typeof ApiPublicTasksUpdateRoute
   '/api/public/validation-key': typeof ApiPublicValidationKeyRoute
+  '/tasks/$taskId/edit': typeof TasksTaskIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -311,6 +320,7 @@ export interface FileRouteTypes {
     | '/api/public/tasks-delete'
     | '/api/public/tasks-update'
     | '/api/public/validation-key'
+    | '/tasks/$taskId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -341,6 +351,7 @@ export interface FileRouteTypes {
     | '/api/public/tasks-delete'
     | '/api/public/tasks-update'
     | '/api/public/validation-key'
+    | '/tasks/$taskId/edit'
   id:
     | '__root__'
     | '/'
@@ -372,6 +383,7 @@ export interface FileRouteTypes {
     | '/api/public/tasks-delete'
     | '/api/public/tasks-update'
     | '/api/public/validation-key'
+    | '/tasks/$taskId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -381,7 +393,7 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   PostTaskRoute: typeof PostTaskRoute
   ProfileRoute: typeof ProfileRoute
-  TasksTaskIdRoute: typeof TasksTaskIdRoute
+  TasksTaskIdRoute: typeof TasksTaskIdRouteWithChildren
   TasksIndexRoute: typeof TasksIndexRoute
   ApiPublicAyadiBalanceRoute: typeof ApiPublicAyadiBalanceRoute
   ApiPublicAyadiMineRoute: typeof ApiPublicAyadiMineRoute
@@ -475,6 +487,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/messages/$conversationId'
       preLoaderRoute: typeof MessagesConversationIdRouteImport
       parentRoute: typeof MessagesRoute
+    }
+    '/tasks/$taskId/edit': {
+      id: '/tasks/$taskId/edit'
+      path: '/edit'
+      fullPath: '/tasks/$taskId/edit'
+      preLoaderRoute: typeof TasksTaskIdEditRouteImport
+      parentRoute: typeof TasksTaskIdRoute
     }
     '/api/public/validation-key': {
       id: '/api/public/validation-key'
@@ -626,6 +645,18 @@ const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
   MessagesRouteChildren,
 )
 
+interface TasksTaskIdRouteChildren {
+  TasksTaskIdEditRoute: typeof TasksTaskIdEditRoute
+}
+
+const TasksTaskIdRouteChildren: TasksTaskIdRouteChildren = {
+  TasksTaskIdEditRoute: TasksTaskIdEditRoute,
+}
+
+const TasksTaskIdRouteWithChildren = TasksTaskIdRoute._addFileChildren(
+  TasksTaskIdRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
@@ -633,7 +664,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   PostTaskRoute: PostTaskRoute,
   ProfileRoute: ProfileRoute,
-  TasksTaskIdRoute: TasksTaskIdRoute,
+  TasksTaskIdRoute: TasksTaskIdRouteWithChildren,
   TasksIndexRoute: TasksIndexRoute,
   ApiPublicAyadiBalanceRoute: ApiPublicAyadiBalanceRoute,
   ApiPublicAyadiMineRoute: ApiPublicAyadiMineRoute,
