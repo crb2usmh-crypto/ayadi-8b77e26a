@@ -20,6 +20,7 @@ import { Route as MessagesIndexRouteImport } from './routes/messages.index'
 import { Route as TasksTaskIdRouteImport } from './routes/tasks.$taskId'
 import { Route as MessagesConversationIdRouteImport } from './routes/messages.$conversationId'
 import { Route as ApiPublicValidationKeyRouteImport } from './routes/api.public.validation-key'
+import { Route as ApiPublicTasksUpdateRouteImport } from './routes/api.public.tasks-update'
 import { Route as ApiPublicTasksDeleteRouteImport } from './routes/api.public.tasks-delete'
 import { Route as ApiPublicTasksCreateRouteImport } from './routes/api.public.tasks-create'
 import { Route as ApiPublicTasksCompleteRouteImport } from './routes/api.public.tasks-complete'
@@ -91,6 +92,11 @@ const MessagesConversationIdRoute = MessagesConversationIdRouteImport.update({
 const ApiPublicValidationKeyRoute = ApiPublicValidationKeyRouteImport.update({
   id: '/api/public/validation-key',
   path: '/api/public/validation-key',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicTasksUpdateRoute = ApiPublicTasksUpdateRouteImport.update({
+  id: '/api/public/tasks-update',
+  path: '/api/public/tasks-update',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicTasksDeleteRoute = ApiPublicTasksDeleteRouteImport.update({
@@ -208,6 +214,7 @@ export interface FileRoutesByFullPath {
   '/api/public/tasks-complete': typeof ApiPublicTasksCompleteRoute
   '/api/public/tasks-create': typeof ApiPublicTasksCreateRoute
   '/api/public/tasks-delete': typeof ApiPublicTasksDeleteRoute
+  '/api/public/tasks-update': typeof ApiPublicTasksUpdateRoute
   '/api/public/validation-key': typeof ApiPublicValidationKeyRoute
 }
 export interface FileRoutesByTo {
@@ -237,6 +244,7 @@ export interface FileRoutesByTo {
   '/api/public/tasks-complete': typeof ApiPublicTasksCompleteRoute
   '/api/public/tasks-create': typeof ApiPublicTasksCreateRoute
   '/api/public/tasks-delete': typeof ApiPublicTasksDeleteRoute
+  '/api/public/tasks-update': typeof ApiPublicTasksUpdateRoute
   '/api/public/validation-key': typeof ApiPublicValidationKeyRoute
 }
 export interface FileRoutesById {
@@ -268,6 +276,7 @@ export interface FileRoutesById {
   '/api/public/tasks-complete': typeof ApiPublicTasksCompleteRoute
   '/api/public/tasks-create': typeof ApiPublicTasksCreateRoute
   '/api/public/tasks-delete': typeof ApiPublicTasksDeleteRoute
+  '/api/public/tasks-update': typeof ApiPublicTasksUpdateRoute
   '/api/public/validation-key': typeof ApiPublicValidationKeyRoute
 }
 export interface FileRouteTypes {
@@ -300,6 +309,7 @@ export interface FileRouteTypes {
     | '/api/public/tasks-complete'
     | '/api/public/tasks-create'
     | '/api/public/tasks-delete'
+    | '/api/public/tasks-update'
     | '/api/public/validation-key'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -329,6 +339,7 @@ export interface FileRouteTypes {
     | '/api/public/tasks-complete'
     | '/api/public/tasks-create'
     | '/api/public/tasks-delete'
+    | '/api/public/tasks-update'
     | '/api/public/validation-key'
   id:
     | '__root__'
@@ -359,6 +370,7 @@ export interface FileRouteTypes {
     | '/api/public/tasks-complete'
     | '/api/public/tasks-create'
     | '/api/public/tasks-delete'
+    | '/api/public/tasks-update'
     | '/api/public/validation-key'
   fileRoutesById: FileRoutesById
 }
@@ -388,6 +400,7 @@ export interface RootRouteChildren {
   ApiPublicTasksCompleteRoute: typeof ApiPublicTasksCompleteRoute
   ApiPublicTasksCreateRoute: typeof ApiPublicTasksCreateRoute
   ApiPublicTasksDeleteRoute: typeof ApiPublicTasksDeleteRoute
+  ApiPublicTasksUpdateRoute: typeof ApiPublicTasksUpdateRoute
   ApiPublicValidationKeyRoute: typeof ApiPublicValidationKeyRoute
 }
 
@@ -468,6 +481,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/validation-key'
       fullPath: '/api/public/validation-key'
       preLoaderRoute: typeof ApiPublicValidationKeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/tasks-update': {
+      id: '/api/public/tasks-update'
+      path: '/api/public/tasks-update'
+      fullPath: '/api/public/tasks-update'
+      preLoaderRoute: typeof ApiPublicTasksUpdateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/tasks-delete': {
@@ -632,6 +652,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTasksCompleteRoute: ApiPublicTasksCompleteRoute,
   ApiPublicTasksCreateRoute: ApiPublicTasksCreateRoute,
   ApiPublicTasksDeleteRoute: ApiPublicTasksDeleteRoute,
+  ApiPublicTasksUpdateRoute: ApiPublicTasksUpdateRoute,
   ApiPublicValidationKeyRoute: ApiPublicValidationKeyRoute,
 }
 export const routeTree = rootRouteImport

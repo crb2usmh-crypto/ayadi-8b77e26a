@@ -8,7 +8,7 @@ import type { BidRow, ProfileRow } from "@/lib/supabase/types";
 export const Route = createFileRoute("/api/public/bids-list")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      POST: async ({ request }: { request: Request }) => {
         let body: { taskId?: unknown };
         try {
           body = await request.json();

@@ -17,7 +17,7 @@ import type { ProfileRow, ReviewRow } from "@/lib/supabase/types";
 export const Route = createFileRoute("/api/public/reviews-for-task")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      POST: async ({ request }: { request: Request }) => {
         let body: { accessToken?: unknown; taskId?: unknown };
         try {
           body = await request.json();

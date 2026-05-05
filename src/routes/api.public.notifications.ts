@@ -15,7 +15,7 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/api/public/notifications")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      POST: async ({ request }: { request: Request }) => {
         // ---- 1. Parse input ----
         let body: { accessToken?: unknown };
         try {

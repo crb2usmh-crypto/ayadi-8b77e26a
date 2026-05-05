@@ -44,7 +44,7 @@ function withDetails(
 export const Route = createFileRoute("/api/public/profile-update")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      POST: async ({ request }: { request: Request }) => {
         let body: { accessToken?: unknown; profile?: Record<string, unknown> };
         try {
           body = await request.json();

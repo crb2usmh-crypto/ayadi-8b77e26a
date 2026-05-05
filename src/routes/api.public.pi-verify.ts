@@ -8,7 +8,7 @@ import type { ProfileRow } from "@/lib/supabase/types";
 export const Route = createFileRoute("/api/public/pi-verify")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      POST: async ({ request }: { request: Request }) => {
         let body: { accessToken?: unknown };
         try {
           body = await request.json();

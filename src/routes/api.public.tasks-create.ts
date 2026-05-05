@@ -53,7 +53,7 @@ function withDetails(
 export const Route = createFileRoute("/api/public/tasks-create")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      POST: async ({ request }: { request: Request }) => {
         // ---- 1. Parse + validate input ----
         let body: { accessToken?: unknown; task?: Record<string, unknown> };
         try {

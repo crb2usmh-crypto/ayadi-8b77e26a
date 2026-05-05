@@ -23,7 +23,7 @@ import {
 export const Route = createFileRoute("/api/public/bids-accept")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      POST: async ({ request }: { request: Request }) => {
         let body: { accessToken?: unknown; bidId?: unknown };
         try {
           body = await request.json();

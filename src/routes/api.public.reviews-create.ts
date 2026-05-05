@@ -16,7 +16,7 @@ import {
 export const Route = createFileRoute("/api/public/reviews-create")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      POST: async ({ request }: { request: Request }) => {
         let body: {
           accessToken?: unknown;
           taskId?: unknown;

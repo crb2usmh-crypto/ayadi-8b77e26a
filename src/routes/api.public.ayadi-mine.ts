@@ -34,7 +34,7 @@ interface BalanceRow {
 export const Route = createFileRoute("/api/public/ayadi-mine")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      POST: async ({ request }: { request: Request }) => {
         // ---- 1. Parse body ----
         let body: { accessToken?: unknown };
         try {
