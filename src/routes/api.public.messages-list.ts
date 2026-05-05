@@ -17,7 +17,7 @@ import {
 export const Route = createFileRoute("/api/public/messages-list")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      POST: async ({ request }: { request: Request }) => {
         let payload: { accessToken?: unknown; conversationId?: unknown };
         try {
           payload = await request.json();
@@ -96,4 +96,4 @@ export const Route = createFileRoute("/api/public/messages-list")({
       },
     },
   },
-});
+} as any);

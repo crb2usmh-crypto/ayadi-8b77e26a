@@ -17,7 +17,7 @@ import {
 export const Route = createFileRoute("/api/public/tasks-complete")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      POST: async ({ request }: { request: Request }) => {
         let body: { accessToken?: unknown; taskId?: unknown };
         try {
           body = await request.json();
@@ -133,4 +133,4 @@ export const Route = createFileRoute("/api/public/tasks-complete")({
       },
     },
   },
-});
+} as any);

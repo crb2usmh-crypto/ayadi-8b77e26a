@@ -30,7 +30,7 @@ interface ClaimRow {
 export const Route = createFileRoute("/api/public/ayadi-balance")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      POST: async ({ request }: { request: Request }) => {
         let body: { accessToken?: unknown };
         try {
           body = await request.json();
@@ -98,4 +98,4 @@ export const Route = createFileRoute("/api/public/ayadi-balance")({
       },
     },
   },
-});
+} as any);

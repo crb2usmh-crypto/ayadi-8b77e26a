@@ -17,7 +17,7 @@ import {
 export const Route = createFileRoute("/api/public/messages-send")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      POST: async ({ request }: { request: Request }) => {
         let payload: {
           accessToken?: unknown;
           conversationId?: unknown;
@@ -128,4 +128,4 @@ export const Route = createFileRoute("/api/public/messages-send")({
       },
     },
   },
-});
+} as any);

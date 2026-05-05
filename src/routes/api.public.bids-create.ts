@@ -8,7 +8,7 @@ import type { TaskRow } from "@/lib/supabase/types";
 export const Route = createFileRoute("/api/public/bids-create")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      POST: async ({ request }: { request: Request }) => {
         let body: { taskId?: unknown; amount?: unknown; message?: unknown; bidderPiUid?: unknown };
         try {
           body = await request.json();
@@ -89,4 +89,4 @@ export const Route = createFileRoute("/api/public/bids-create")({
       },
     },
   },
-});
+} as any);

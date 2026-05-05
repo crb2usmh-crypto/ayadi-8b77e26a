@@ -1,78 +1,67 @@
-# خطة إصلاح تدفق المصادقة في تطبيق "أيادي"
+## خطة: حذف وتعديل المهام في "أيادي"
 
-## التشخيص
+سأضيف إمكانية حذف المهام وتعديلها مع القيود المطلوبة (المالك فقط، حالة "مفتوحة" فقط).
 
-بعد فحص `AppShell.tsx`, `PiAuthProvider.tsx`, `auth.tsx`, و `onboarding.tsx`:
+### 1. مسارات الخادم (Server Routes)
 
-1. **السبب الجذري للمشكلة**: `PiAuthProvider` يقرأ `ayadi.pi.session` من `localStorage` عند التحميل ويعتبر أي قيمة موجودة جلسة صالحة، بدون التحقق من الخادم. فإذا وُجدت جلسة قديمة (من اختبار سابق، أو dev-mode token، أو جلسة لمستخدم لم يكمل ملفه)، يتجاوز `AppShell` شاشة `/auth` ويوجه المستخدم مباشرة إلى `/onboarding`.
+**`src/routes/api.public.tasks-delete.ts`** (جديد)
+- استقبال `{ accessToken, taskId }` عبر POST.
+- التحقق من رمز Pi باستخدام `verifyPiToken` من `@/lib/server/piVerify`.
+- جلب المهمة من Supabase عبر `SUPABASE_SERVICE_ROLE_KEY` والتحقق من:
+  - `owner_pi_uid === piUid` → وإلا 403 ("ليس لديك صلاحية لحذف هذه المهمة").
+  - `status === "open"` → وإلا 409 ("لا يمكن حذف مهمة قيد التنفيذ أو مكتملة").
+- تنفيذ `DELETE` على `/rest/v1/tasks?id=eq.{taskId}`.
+- إرجاع `{ success: true }`.
 
-2. **مشكلة ثانوية**: لا يوجد فحص لانتهاء صلاحية `accessToken` من Pi، ولا إعادة مزامنة مع الخادم عند بدء التشغيل.
+**`src/routes/api.public.tasks-update.ts`** (جديد)
+- استقبال `{ accessToken, taskId, task: {...} }` عبر POST.
+- نفس تحققات Pi + الملكية + الحالة "مفتوحة".
+- التحقق من الحقول (نفس قواعد `tasks-create`): `title`, `description`, `category`, `budget`, `location`, `deadline`, `country` — كلها اختيارية في PATCH جزئي مع نفس قيود الطول.
+- تنفيذ `PATCH` على `/rest/v1/tasks?id=eq.{taskId}` مع `Prefer: return=representation`.
+- إرجاع `{ task }`.
 
-3. **مشكلة ثالثة**: `AppShell` يعتمد على `profileQueryOptions` الذي يقرأ مباشرة من Supabase باستخدام `anon key`. إذا فشلت RLS أو الشبكة، يبقى `profile = undefined` و `profileLoading = false`، فيُعتبر المستخدم "غير مُكمِل لملفه" ويُعاد توجيهه قسراً.
+كلاهما يستخدم `adminHeaders` من `piVerify.ts` ويعرض الأخطاء بالعربية مع `withDetails` المُحكم بـ `ALLOW_DEV_MODE`.
 
-4. **الحالة الحالية**: المستخدم يفتح التطبيق → جلسة قديمة في localStorage → AppShell يرى `session` → يتجاوز `/auth` → الملف غير موجود → يُوجَّه إلى `/onboarding` فوراً. هذا بالضبط ما يصفه المستخدم.
+### 2. صفحة تعديل المهمة
 
-## الحل
+**`src/routes/tasks.$taskId.edit.tsx`** (جديد) — مسار `/tasks/$taskId/edit`
+- في `loader`: تحميل المهمة عبر `taskQueryOptions`.
+- في المكوّن: التحقق من أن المستخدم مالك وأن الحالة `open`؛ وإلا `toast.error` + `navigate` للرجوع لصفحة التفاصيل.
+- نموذج بنفس حقول `post-task.tsx` (عنوان، فئة، وصف، ميزانية، موقع، دولة، موعد نهائي) لكن مملوء مسبقاً ببيانات المهمة الحالية.
+- زر "حفظ التغييرات" → POST إلى `/api/public/tasks-update`.
+- عند النجاح: `invalidateQueries(["tasks"])` + `toast.success("تم تحديث المهمة بنجاح")` + `navigate({ to: "/tasks/$taskId", params: { taskId } })`.
 
-### 1. تشديد إدارة الجلسة في `PiAuthProvider`
+ملاحظة: حقل "الوسوم" المذكور في الطلب غير موجود في الـ schema الحالي (`TaskRow` لا يحتوي على `tags`)، لذا سأكتفي بالحقول القابلة للتعديل فعلياً. إضافة الوسوم لاحقاً تتطلب migration للـ DB.
 
-- **إضافة حالة `bootstrapping`**: عند بدء التطبيق، لا نعتبر المستخدم "مسجل دخوله" قبل التحقق من صلاحية الـ `accessToken` المخزن.
-- **التحقق من الخادم عند الإقلاع**: إذا وُجدت جلسة محلية، نستدعي `/api/public/pi-verify` للتأكد من أنها لا تزال صالحة.
-  - إذا فشل التحقق (401, 403, خطأ شبكة 4xx) → نمسح الجلسة ونعيد المستخدم إلى `/auth`.
-  - استثناء: إذا كان `accessToken === "dev-mode-token"` و `isDevModeAllowed`، نقبلها بدون استدعاء الخادم.
-- **زر "تسجيل الخروج"**: التأكد أنه يمسح الجلسة فوراً ويوجه إلى `/auth`.
-- **عند `login()` الناجح**: لا تخزن الجلسة إلا بعد التحقق من الخادم (هذا موجود بالفعل، نُبقيه).
+### 3. تعديلات صفحة تفاصيل المهمة
 
-### 2. إعادة هيكلة بوابة الوصول في `AppShell`
+**`src/routes/tasks.$taskId.tsx`**
+- إضافة قسم "إجراءات المالك" في الـ aside، يظهر فقط عند `isLoggedIn && isOwner && task.status === "open"`:
+  - زر **"تعديل المهمة"** (`Pencil`) → `<Link to="/tasks/$taskId/edit">`.
+  - زر **"حذف المهمة"** (`variant="destructive"`, `Trash2`) ملفوف بـ `AlertDialog`:
+    - العنوان: "هل أنت متأكد من حذف هذه المهمة؟"
+    - الوصف: "لا يمكن التراجع عن هذا الإجراء."
+    - أزرار: "إلغاء" / "حذف".
+    - عند التأكيد: `useMutation` يستدعي `/api/public/tasks-delete`، ثم `invalidateQueries(["tasks"])` + `toast.success("تم حذف المهمة بنجاح")` + `navigate({ to: "/" })`.
 
-التسلسل الجديد المُحكم:
+### 4. الترجمات
 
-```text
-1. bootstrapping؟ → اعرض شاشة تحميل (لا توجيه)
-2. لا توجد جلسة؟ → /auth (إلا إذا كان المستخدم بالفعل في /auth)
-3. جلسة موجودة لكن profile query لا يزال يُحمّل؟ → اعرض شاشة تحميل
-4. profile === null (لا يوجد صف) أو onboarded_at فارغ؟ → /onboarding
-5. profile مكتمل؟ → السماح بالوصول للصفحة المطلوبة (إذا كان في /auth أو /onboarding، وجهه إلى /)
-```
+إضافة مفاتيح إلى `src/lib/i18n/locales/ar.json` و `en.json`:
+- `task.editTask`, `task.deleteTask`
+- `task.deleteConfirmTitle`, `task.deleteConfirmDesc`
+- `task.deleteSuccess`, `task.updateSuccess`
+- `task.editPageTitle`, `task.saveChanges`, `task.saving`
+- `common.cancel`, `common.delete` (إذا لم تكن موجودة)
 
-سنُضيف أيضاً معالجة خطأ `profile query`: إذا فشل الاستعلام، نعرض زر "إعادة المحاولة" بدلاً من الافتراض أن المستخدم يحتاج onboarding.
+### الملفات المتأثرة
 
-### 3. تحسين `AuthPage`
+- جديد: `src/routes/api.public.tasks-delete.ts`
+- جديد: `src/routes/api.public.tasks-update.ts`
+- جديد: `src/routes/tasks.$taskId.edit.tsx`
+- تعديل: `src/routes/tasks.$taskId.tsx` (أزرار المالك + AlertDialog)
+- تعديل: `src/lib/i18n/locales/ar.json` و `en.json`
 
-- التحقق التلقائي من حالة الجلسة عند التحميل (موجود) — تأكيد أن `useEffect` يعيد التوجيه إلى `/` فقط بعد اكتمال `bootstrapping`.
-- إظهار رسالة واضحة باللغة العربية إذا فشلت `Pi.authenticate()` (مثلاً: "لم يتم العثور على Pi Browser" أو "تم رفض الإذن").
+### الأمان
 
-### 4. التحقق من الملف الشخصي قبل التوجيه (الخطوة 3 في طلبك)
-
-- بعد نجاح `login()`، يقوم `AppShell` تلقائياً بجلب `profileQueryOptions(piUid)`.
-- إذا كانت النتيجة `null` → onboarding. إذا كانت موجودة مع `onboarded_at` → الصفحة الرئيسية.
-- لا حاجة لمنطق توجيه يدوي في `AuthPage` — فقط `navigate({ to: "/" })` و`AppShell` يتولى الباقي بناءً على حالة الملف.
-
-### 5. حماية الصفحات الفردية (دفاع متعدد الطبقات)
-
-`AppShell` يحمي بالفعل، لكن للتأكد:
-- صفحة `/onboarding` تُرجع `null` بالفعل إذا لم توجد جلسة (موجود).
-- لن نضيف `beforeLoad` في كل route لأن `AppShell` يكفي ضمن SPA pattern الحالي، لكن سنضمن أن `AppShell` يعرض **شاشة تحميل** بدلاً من المحتوى المحمي أثناء الـ bootstrapping.
-
-## الملفات التي ستُعدَّل
-
-| الملف | التغيير |
-|---|---|
-| `src/components/providers/PiAuthProvider.tsx` | إضافة `bootstrapping` state، التحقق من `accessToken` ضد `/api/public/pi-verify` عند الإقلاع، مسح الجلسات غير الصالحة. |
-| `src/components/layout/AppShell.tsx` | إعادة ترتيب البوابات: bootstrapping → auth → profile loading → onboarding → home. عرض شاشة تحميل أثناء الفترات الانتقالية. |
-| `src/routes/auth.tsx` | تبسيط منطق التوجيه بعد تسجيل الدخول، الاعتماد على `AppShell` لتقرير الوجهة. |
-| `src/lib/i18n/locales/ar.json` & `en.json` | إضافة مفاتيح: `auth.checkingSession`, `auth.sessionExpired`. |
-
-## السلوك النهائي المتوقع
-
-1. مستخدم جديد يفتح التطبيق → يرى شاشة تحميل قصيرة → ينتقل تلقائياً إلى `/auth`.
-2. ينقر "تسجيل الدخول بحساب Pi" → `Pi.authenticate()` → التحقق من الخادم.
-3. بعد النجاح: إذا لم يكن لديه ملف شخصي مكتمل → `/onboarding`. إذا كان مكتملاً → `/`.
-4. إذا فتح التطبيق بجلسة قديمة منتهية الصلاحية → التحقق يفشل → مسح الجلسة → `/auth`.
-5. أي صفحة محمية يحاول الوصول إليها بدون جلسة → إعادة توجيه فوري إلى `/auth`.
-
-## ملاحظات تقنية
-
-- `bootstrapping` يبدأ `true` فقط عند وجود جلسة محلية. إذا لم توجد، يُضبَط فوراً على `false` لتجنّب وميض شاشة التحميل عند المستخدمين الجدد.
-- لن نلمس `pi-verify` route لأنه يعمل بشكل صحيح بالفعل.
-- لن نُجبر تحديث schema أو migrations.
+- جميع التحققات (الملكية + الحالة) تتم على الخادم بعد التحقق من رمز Pi، وليس على العميل فقط.
+- إخفاء الأزرار في الواجهة هو UX فقط؛ الخادم يرفض أي طلب غير مصرّح به برمز 403/409.

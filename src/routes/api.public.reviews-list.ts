@@ -15,7 +15,7 @@ import type { ProfileRow, ReviewRow } from "@/lib/supabase/types";
 export const Route = createFileRoute("/api/public/reviews-list")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      POST: async ({ request }: { request: Request }) => {
         let body: { revieweePiUid?: unknown; limit?: unknown };
         try {
           body = await request.json();
@@ -90,4 +90,4 @@ export const Route = createFileRoute("/api/public/reviews-list")({
       },
     },
   },
-});
+} as any);

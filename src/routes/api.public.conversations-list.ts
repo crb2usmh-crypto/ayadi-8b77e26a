@@ -13,7 +13,7 @@ import {
 export const Route = createFileRoute("/api/public/conversations-list")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      POST: async ({ request }: { request: Request }) => {
         let body: { accessToken?: unknown };
         try {
           body = await request.json();
@@ -55,4 +55,4 @@ export const Route = createFileRoute("/api/public/conversations-list")({
       },
     },
   },
-});
+} as any);
