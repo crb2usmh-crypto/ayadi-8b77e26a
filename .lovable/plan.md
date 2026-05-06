@@ -1,67 +1,93 @@
-## خطة: حذف وتعديل المهام في "أيادي"
+# خطة معالجة طلبات تطبيق "أيادي"
 
-سأضيف إمكانية حذف المهام وتعديلها مع القيود المطلوبة (المالك فقط، حالة "مفتوحة" فقط).
+## 1) إصلاح خطأ "تعذّر حفظ العرض"
 
-### 1. مسارات الخادم (Server Routes)
+**السبب الجذري:** في `src/routes/api.public.bids-create.ts` السطر 69 يحوّل معرّف المهمة إلى رقم: `task_id: Number(taskId)`. لكن معرّفات المهام في Supabase هي UUID نصيّة، فيصبح `task_id = NaN` ويفشل الإدراج بصمت برسالة عربية عامة.
 
-**`src/routes/api.public.tasks-delete.ts`** (جديد)
-- استقبال `{ accessToken, taskId }` عبر POST.
-- التحقق من رمز Pi باستخدام `verifyPiToken` من `@/lib/server/piVerify`.
-- جلب المهمة من Supabase عبر `SUPABASE_SERVICE_ROLE_KEY` والتحقق من:
-  - `owner_pi_uid === piUid` → وإلا 403 ("ليس لديك صلاحية لحذف هذه المهمة").
-  - `status === "open"` → وإلا 409 ("لا يمكن حذف مهمة قيد التنفيذ أو مكتملة").
-- تنفيذ `DELETE` على `/rest/v1/tasks?id=eq.{taskId}`.
-- إرجاع `{ success: true }`.
+**الإصلاح:**
+- استبدال `task_id: Number(taskId)` بـ `task_id: taskId` (سلسلة نصية).
+- تعزيز التحقق من صيغة UUID (regex `^[0-9a-f-]{8,40}$/i`) كما في `tasks-update`.
+- إضافة التحقق من جلسة Pi عبر `verifyPiToken(accessToken)` ومطابقة `bidderPiUid` مع هوية الجلسة (حماية ضد الانتحال).
+- منع المالك من المزايدة على مهمته.
+- تمرير تفاصيل الخطأ من PostgREST في وضع التطوير (مثل ما يفعله `profile-update`) لتسهيل التشخيص.
+- بقاء الواجهة (`tasks.$taskId.tsx`) كما هي — `String(task.id)` صحيح بالفعل.
 
-**`src/routes/api.public.tasks-update.ts`** (جديد)
-- استقبال `{ accessToken, taskId, task: {...} }` عبر POST.
-- نفس تحققات Pi + الملكية + الحالة "مفتوحة".
-- التحقق من الحقول (نفس قواعد `tasks-create`): `title`, `description`, `category`, `budget`, `location`, `deadline`, `country` — كلها اختيارية في PATCH جزئي مع نفس قيود الطول.
-- تنفيذ `PATCH` على `/rest/v1/tasks?id=eq.{taskId}` مع `Prefer: return=representation`.
-- إرجاع `{ task }`.
+## 2) تشغيل زر "تعديل" للمهمة والملف الشخصي
 
-كلاهما يستخدم `adminHeaders` من `piVerify.ts` ويعرض الأخطاء بالعربية مع `withDetails` المُحكم بـ `ALLOW_DEV_MODE`.
+**حالة التعديل في صفحة المهمة:** زر التعديل موجود بالفعل في `OwnerActions` ويستخدم `Link to="/tasks/$taskId/edit"` بشكل صحيح، وملف `tasks.$taskId.edit.tsx` موجود ويعمل. لا حاجة لتغيير سوى:
+- التأكد من تمرير `taskId` كسلسلة في `params={{ taskId }}` (موجود).
+- إضافة مفاتيح ترجمة إن لزم.
 
-### 2. صفحة تعديل المهمة
+**أيقونة التعديل في الملف الشخصي:** زر "تعديل" موجود حالياً في `profile.tsx` لكنه بدون رابط. سيتم:
+- ربطه بصفحة `/onboarding` (التي تعمل أيضاً كصفحة "تعديل البيانات" وتدعم القيم الموجودة مسبقاً).
+- إضافة `<Link to="/onboarding">` حول الزر.
 
-**`src/routes/tasks.$taskId.edit.tsx`** (جديد) — مسار `/tasks/$taskId/edit`
-- في `loader`: تحميل المهمة عبر `taskQueryOptions`.
-- في المكوّن: التحقق من أن المستخدم مالك وأن الحالة `open`؛ وإلا `toast.error` + `navigate` للرجوع لصفحة التفاصيل.
-- نموذج بنفس حقول `post-task.tsx` (عنوان، فئة، وصف، ميزانية، موقع، دولة، موعد نهائي) لكن مملوء مسبقاً ببيانات المهمة الحالية.
-- زر "حفظ التغييرات" → POST إلى `/api/public/tasks-update`.
-- عند النجاح: `invalidateQueries(["tasks"])` + `toast.success("تم تحديث المهمة بنجاح")` + `navigate({ to: "/tasks/$taskId", params: { taskId } })`.
+## 3) رفع صورة اختيارية للعرض
 
-ملاحظة: حقل "الوسوم" المذكور في الطلب غير موجود في الـ schema الحالي (`TaskRow` لا يحتوي على `tags`)، لذا سأكتفي بالحقول القابلة للتعديل فعلياً. إضافة الوسوم لاحقاً تتطلب migration للـ DB.
+**التغييرات على قاعدة البيانات (Migration):**
+- إنشاء bucket تخزين `bid-images` (عام للقراءة).
+- إضافة عمود `image_url text` إلى جدول `bids`.
+- سياسات RLS:
+  - أي مستخدم مصادق عليه يستطيع رفع صورة في bucket `bid-images`.
+  - القراءة العامة (لعرضها لصاحب المهمة).
 
-### 3. تعديلات صفحة تفاصيل المهمة
+**الواجهة (`tasks.$taskId.tsx` Dialog تقديم العرض):**
+- إضافة حقل `<Input type="file" accept="image/*">` اختياري داخل النموذج.
+- عند الإرسال: إن وُجدت صورة، رفعها أولاً إلى Supabase Storage عبر `supabase.storage.from('bid-images').upload(...)`، ثم تمرير `imageUrl` ضمن جسم `bids-create`.
 
-**`src/routes/tasks.$taskId.tsx`**
-- إضافة قسم "إجراءات المالك" في الـ aside، يظهر فقط عند `isLoggedIn && isOwner && task.status === "open"`:
-  - زر **"تعديل المهمة"** (`Pencil`) → `<Link to="/tasks/$taskId/edit">`.
-  - زر **"حذف المهمة"** (`variant="destructive"`, `Trash2`) ملفوف بـ `AlertDialog`:
-    - العنوان: "هل أنت متأكد من حذف هذه المهمة؟"
-    - الوصف: "لا يمكن التراجع عن هذا الإجراء."
-    - أزرار: "إلغاء" / "حذف".
-    - عند التأكيد: `useMutation` يستدعي `/api/public/tasks-delete`، ثم `invalidateQueries(["tasks"])` + `toast.success("تم حذف المهمة بنجاح")` + `navigate({ to: "/" })`.
+**الخادم (`api.public.bids-create.ts`):**
+- قبول حقل `imageUrl` اختياري (string، حد أقصى 1024 محرف، يبدأ بـ `https://`).
+- إدراجه في صف `bids` كـ `image_url`.
 
-### 4. الترجمات
+**العرض:** إظهار الصورة (إن وجدت) داخل قائمة العروض في `BidsSection` لصاحب المهمة.
 
-إضافة مفاتيح إلى `src/lib/i18n/locales/ar.json` و `en.json`:
-- `task.editTask`, `task.deleteTask`
-- `task.deleteConfirmTitle`, `task.deleteConfirmDesc`
-- `task.deleteSuccess`, `task.updateSuccess`
-- `task.editPageTitle`, `task.saveChanges`, `task.saving`
-- `common.cancel`, `common.delete` (إذا لم تكن موجودة)
+## 4) صورة رمزية للملف الشخصي (Avatar)
 
-### الملفات المتأثرة
+**قاعدة البيانات:**
+- إنشاء bucket `avatars` (عام).
+- إضافة عمود `avatar_url text` إلى جدول `profiles` (إن لم يكن موجوداً — `getAvatarUrl` يعتمد حالياً على `avatar_seed`).
+- سياسات RLS: المستخدم يرفع/يحدّث ملف باسم `{pi_uid}.{ext}` فقط؛ القراءة عامة.
 
-- جديد: `src/routes/api.public.tasks-delete.ts`
-- جديد: `src/routes/api.public.tasks-update.ts`
-- جديد: `src/routes/tasks.$taskId.edit.tsx`
-- تعديل: `src/routes/tasks.$taskId.tsx` (أزرار المالك + AlertDialog)
-- تعديل: `src/lib/i18n/locales/ar.json` و `en.json`
+**الواجهة (`profile.tsx`):**
+- زر/أيقونة كاميرا فوق `<Avatar>` يفتح اختيار ملف.
+- بعد الاختيار: رفع إلى `avatars/{pi_uid}-{timestamp}.{ext}`.
+- استدعاء `api/public/profile-update` مع `profile.avatar_url = publicUrl`.
+- عرض `avatar_url` إن وُجد، وإلا الرجوع إلى `getAvatarUrl(avatar_seed)`.
 
-### الأمان
+**الخادم (`api.public.profile-update.ts`):** قبول حقل `avatar_url` ضمن المخطط (validation: https URL، حد أقصى 1024 محرف).
 
-- جميع التحققات (الملكية + الحالة) تتم على الخادم بعد التحقق من رمز Pi، وليس على العميل فقط.
-- إخفاء الأزرار في الواجهة هو UX فقط؛ الخادم يرفض أي طلب غير مصرّح به برمز 403/409.
+## 5) تقسيم حقل العنوان في Onboarding
+
+**الواجهة (`onboarding.tsx`):**
+- استبدال `Textarea` الواحد للعنوان بأربع حقول `Input` منفصلة:
+  - `street` — الشارع/الحي
+  - `city` — المدينة
+  - `state` — الولاية/المقاطعة
+  - `postal_code` — الرمز البريدي
+- عند التحميل لمستخدم لديه `address` سابق: ملء `street` بالقيمة الكاملة كاحتياط (لأن الحفظ القديم كان نصاً واحداً)، أو تركها فارغة وعرض القيمة الحالية أسفل الحقول.
+- عند الإرسال: تجميع القيم في سلسلة واحدة:
+  ```
+  address = `${street}، ${city}، ${state} ${postal_code}`.replace(/،\s*،/g, '،').trim()
+  ```
+  وإرسالها في حقل `address` كما هو متوقع من الخادم — لا حاجة لتغيير المخطط أو الـAPI.
+- إضافة مفاتيح ترجمة عربية/إنجليزية: `onboarding.street`, `onboarding.city`, `onboarding.state`, `onboarding.postalCode`.
+
+## التفاصيل التقنية (للمراجعة)
+
+**ملفات سيتم تعديلها:**
+- `src/routes/api.public.bids-create.ts` — إصلاح UUID + تحقق Pi + دعم `imageUrl`.
+- `src/routes/api.public.profile-update.ts` — قبول `avatar_url`.
+- `src/routes/tasks.$taskId.tsx` — حقل رفع الصورة في dialog العرض + عرضها في BidsSection.
+- `src/routes/profile.tsx` — ربط زر "تعديل" بـ `/onboarding` + مكوّن رفع Avatar.
+- `src/routes/onboarding.tsx` — تقسيم العنوان لأربعة حقول.
+- `src/lib/i18n/locales/ar.json` و `en.json` — مفاتيح جديدة.
+- `src/lib/supabase/types.ts` — إضافة `avatar_url` و `image_url` للأنواع.
+
+**Migration جديد** (عبر أداة الترحيل):
+- `create bucket bid-images public`
+- `create bucket avatars public`
+- `alter table bids add column image_url text`
+- `alter table profiles add column avatar_url text` (إذا لم يكن موجوداً)
+- سياسات RLS للـbuckets
+
+**ملاحظة على hydration error الحالي:** خطأ "Hydration failed" في `FullScreenLoader` (تبديل ar/en بين الخادم والعميل) خارج نطاق هذا الطلب وسيُترك كما هو.
