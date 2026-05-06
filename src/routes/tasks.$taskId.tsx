@@ -833,6 +833,21 @@ function BidCard({
             </p>
           )}
 
+          {bid.image_url && (
+            <a
+              href={bid.image_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-block"
+            >
+              <img
+                src={bid.image_url}
+                alt="bid attachment"
+                className="h-24 w-24 rounded-xl object-cover ring-1 ring-border transition hover:ring-primary"
+              />
+            </a>
+          )}
+
           {showAccept && (
             <div className="mt-3 flex justify-end">
               <AlertDialog>
