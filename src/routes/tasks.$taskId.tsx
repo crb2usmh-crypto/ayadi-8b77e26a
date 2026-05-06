@@ -414,8 +414,8 @@ function OwnerActions({
       const res = await fetch("/api/public/tasks-delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accessToken, taskId }),
-      });
+        
+     body: JSON.stringify({ accessToken, taskId: String(taskId) }),
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || `Failed (${res.status})`);
