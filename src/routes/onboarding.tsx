@@ -5,7 +5,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, UserCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -41,7 +40,10 @@ function OnboardingPage() {
   const [form, setForm] = useState({
     full_name: "",
     email: "",
-    address: "",
+    street: "",
+    city: "",
+    state: "",
+    postal_code: "",
     country: "",
   });
   const [submitting, setSubmitting] = useState(false);
@@ -52,7 +54,12 @@ function OnboardingPage() {
       setForm({
         full_name: profile.full_name ?? "",
         email: profile.email ?? "",
-        address: profile.address ?? "",
+        // Old profiles stored a single string; surface it in `street` so the
+        // user can split it across the new fields.
+        street: profile.address ?? "",
+        city: "",
+        state: "",
+        postal_code: "",
         country: profile.country ?? "",
       });
     }
@@ -66,10 +73,20 @@ function OnboardingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.full_name.trim() || !form.email.trim() || !form.address.trim() || !form.country) {
+    if (
+      !form.full_name.trim() ||
+      !form.email.trim() ||
+      !form.street.trim() ||
+      !form.city.trim() ||
+      !form.country
+    ) {
       toast.error(t("onboarding.fieldRequired"));
       return;
     }
+    const address = [form.street, form.city, form.state, form.postal_code]
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .join("، ");
     setSubmitting(true);
     try {
       const res = await fetch("/api/public/profile-update", {
@@ -80,7 +97,7 @@ function OnboardingPage() {
           profile: {
             full_name: form.full_name,
             email: form.email,
-            address: form.address,
+            address,
             country: form.country,
           },
         }),
@@ -153,16 +170,46 @@ function OnboardingPage() {
           </Field>
 
           <Field label={t("onboarding.address")}>
-            <Textarea
-              value={form.address}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, address: e.target.value }))
-              }
-              required
-              maxLength={300}
-              rows={3}
-              className="rounded-xl"
-            />
+            <div className="space-y-3">
+              <Input
+                placeholder={t("onboarding.street")}
+                value={form.street}
+                onChange={(e) => setForm((p) => ({ ...p, street: e.target.value }))}
+                required
+                maxLength={150}
+                className="h-12 rounded-xl"
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  placeholder={t("onboarding.city")}
+                  value={form.city}
+                  onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))}
+                  required
+                  maxLength={80}
+                  className="h-12 rounded-xl"
+                />
+                <Input
+                  placeholder={t("onboarding.state")}
+                  value={form.state}
+                  onChange={(e) => setForm((p) => ({ ...p, state: e.target.value }))}
+                  maxLength={80}
+                  className="h-12 rounded-xl"
+                />
+              </div>
+              <Input
+                placeholder={t("onboarding.postalCode")}
+                value={form.postal_code}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, postal_code: e.target.value }))
+                }
+                maxLength={20}
+                dir="ltr"
+                className="h-12 rounded-xl"
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("onboarding.addressHint")}
+              </p>
+            </div>
           </Field>
 
           <Field label={t("onboarding.country")}>
