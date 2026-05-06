@@ -1,33 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  adminHeaders,
-  getSupabaseAdminEnv,
-  verifyPiToken,
-} from "@/lib/server/piVerify.server";
-import type { TaskRow } from "@/lib/supabase/types";
+import { adminHeaders, getSupabaseAdminEnv } from "@/lib/server/piVerify";
 
 export const Route = createFileRoute("/api/public/bids-create")({
   server: {
     handlers: {
-      POST: async ({ request }: { request: Request }) => {
-        let body: {
-          taskId?: unknown;
-          amount?: unknown;
-          message?: unknown;
-          bidderPiUid?: unknown;
-          accessToken?: unknown;
-          imageUrl?: unknown;
-        };
+      POST: async ({ request }) => {
+        let body: any;
         try {
           body = await request.json();
         } catch {
           return Response.json({ error: "Invalid JSON body" }, { status: 400 });
         }
 
-        const taskId =
-          typeof body.taskId === "string" ? body.taskId.trim() : "";
-        // Tasks use UUID primary keys.
-        if (!/^[0-9a-f-]{8,40}$/i.test(taskId)) {
+        const taskId = typeof body.taskId === "string" ? body.taskId.trim() : "";
+        if (!taskId || taskId.length > 64) {
           return Response.json({ error: "معرف المهمة غير صالح" }, { status: 400 });
         }
 
@@ -36,25 +22,12 @@ export const Route = createFileRoute("/api/public/bids-create")({
           return Response.json({ error: "المبلغ غير صالح" }, { status: 400 });
         }
 
-        const message =
-          typeof body.message === "string" ? body.message.trim() : "";
-
-        const imageUrl =
-          typeof body.imageUrl === "string" ? body.imageUrl.trim() : "";
-        if (imageUrl && (imageUrl.length > 1024 || !/^https:\/\//i.test(imageUrl))) {
-          return Response.json({ error: "رابط الصورة غير صالح" }, { status: 400 });
+        const bidderPiUid = typeof body.bidderPiUid === "string" ? body.bidderPiUid.trim() : "";
+        if (!bidderPiUid || bidderPiUid.length > 256) {
+          return Response.json({ error: "معرف مقدم العرض غير صالح" }, { status: 400 });
         }
 
-        // Verify Pi identity — bidder_pi_uid comes from the verified session,
-        // never blindly trusted from the client body.
-        const verify = await verifyPiToken(body.accessToken);
-        if (!verify.ok) {
-          return Response.json(
-            { error: "فشلت مصادقة Pi، يرجى تسجيل الدخول مجددًا" },
-            { status: verify.status },
-          );
-        }
-        const bidderPiUid = verify.identity.uid;
+        const message = typeof body.message === "string" ? body.message.trim() : "";
 
         const env = getSupabaseAdminEnv();
         if (!env) {
@@ -62,41 +35,34 @@ export const Route = createFileRoute("/api/public/bids-create")({
         }
 
         try {
-          // التحقق من وجود المهمة
+          // 1. تحقق من وجود المهمة
           const taskReq = await fetch(
             `${env.url}/rest/v1/tasks?id=eq.${encodeURIComponent(taskId)}&select=id,status,owner_pi_uid`,
             { headers: adminHeaders(env) },
           );
-          const tasks = (await taskReq.json()) as TaskRow[];
+          const tasks = await taskReq.json();
           if (!Array.isArray(tasks) || tasks.length === 0) {
             return Response.json({ error: "المهمة غير موجودة" }, { status: 400 });
           }
-          if (tasks[0].status !== "open") {
+          const task = tasks[0];
+          if (task.status !== "open") {
             return Response.json({ error: "المهمة ليست مفتوحة لتلقي العروض" }, { status: 400 });
           }
-          if (tasks[0].owner_pi_uid === bidderPiUid) {
-            return Response.json(
-              { error: "لا يمكنك تقديم عرض على مهمتك" },
-              { status: 400 },
-            );
+          if (task.owner_pi_uid === bidderPiUid) {
+            return Response.json({ error: "لا يمكنك تقديم عرض على مهمتك الخاصة" }, { status: 400 });
           }
 
-          // إنشاء العرض — task_id هو UUID نصي، لا تحوّله لرقم.
+          // 2. أدخل العرض
           const insertReq = await fetch(
             `${env.url}/rest/v1/bids`,
             {
               method: "POST",
-              headers: {
-                ...adminHeaders(env),
-                "Content-Type": "application/json",
-                "Prefer": "return=representation",
-              },
+              headers: { ...adminHeaders(env), "Content-Type": "application/json", "Prefer": "return=representation" },
               body: JSON.stringify({
-                task_id: taskId,
+                task_id: Number(taskId),
                 bidder_pi_uid: bidderPiUid,
                 amount: amountNum,
                 message: message,
-                image_url: imageUrl || null,
                 status: "pending",
               }),
             },
@@ -104,13 +70,9 @@ export const Route = createFileRoute("/api/public/bids-create")({
           if (!insertReq.ok) {
             const errText = await insertReq.text();
             console.error("[bids-create] insert failed:", errText);
-            const payload: Record<string, unknown> = { error: "تعذر حفظ العرض" };
-            if (process.env.ALLOW_DEV_MODE === "true") {
-              payload.details = errText;
-            }
-            return Response.json(payload, { status: 500 });
+            return Response.json({ error: "تعذر حفظ العرض" }, { status: 500 });
           }
-          const [newBid] = (await insertReq.json()) as any[];
+          const [newBid] = await insertReq.json();
 
           return Response.json({ bid: newBid ?? null });
         } catch (err) {
