@@ -2,7 +2,7 @@ import { createFileRoute, useParams, useRouter, Link } from "@tanstack/react-rou
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,13 +51,15 @@ function EditTaskPage() {
         body: JSON.stringify({
           accessToken: session!.accessToken,
           taskId: String(taskId),
-          title: title.trim(),
-          description: description.trim(),
-          budget: Number(budget),
-          location: location.trim(),
-          deadline: deadline.trim(),
-          category: category.trim(),
-          country: country.trim(),
+          task: {
+            title: title.trim(),
+            description: description.trim(),
+            budget: Number(budget),
+            location: location.trim(),
+            deadline: deadline.trim(),
+            category: category.trim(),
+            country: country.trim(),
+          },
         }),
       });
       if (!res.ok) {
