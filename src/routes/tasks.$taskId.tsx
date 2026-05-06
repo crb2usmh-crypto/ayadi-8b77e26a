@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowLeft, MapPin, Clock, Users, Wallet, Star, CheckCircle2, Inbox, Loader2, MessageCircle, Flag, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, MapPin, Clock, Users, Wallet, Star, CheckCircle2, Inbox, Loader2, MessageCircle, Flag, Pencil, Trash2, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +39,7 @@ import { fireConfetti } from "@/lib/confetti";
 import { usePiAuth } from "@/components/providers/PiAuthProvider";
 import { ReviewForm } from "@/components/common/ReviewForm";
 import { ReviewsList } from "@/components/common/ReviewsList";
+import { supabase } from "@/lib/supabaseClient";
 
 export const Route = createFileRoute("/tasks/$taskId")({
   loader: async ({ params, context: { queryClient } }) => {
@@ -85,6 +86,9 @@ function TaskDetail() {
   const router = useRouter();
   const [amount, setAmount] = useState<string>("");
   const [message, setMessage] = useState<string>("");
+  const [bidImage, setBidImage] = useState<File | null>(null);
+  const [bidImagePreview, setBidImagePreview] = useState<string | null>(null);
+  const [uploadingBidImage, setUploadingBidImage] = useState(false);
   const { scrollY } = useScroll();
   const heroY = useTransform(scrollY, [0, 400], [0, 80]);
   const heroScale = useTransform(scrollY, [0, 400], [1, 1.15]);
@@ -130,6 +134,22 @@ function TaskDetail() {
   const createBid = useMutation({
   mutationFn: async () => {
     if (!session) throw new Error(t("task.loginToBid"));
+    let imageUrl: string | undefined;
+    if (bidImage) {
+      setUploadingBidImage(true);
+      try {
+        const ext = (bidImage.name.split(".").pop() || "jpg").toLowerCase().slice(0, 5);
+        const path = `${session.user.uid}-${task.id}-${Date.now()}.${ext}`;
+        const up = await supabase.storage
+          .from("bid-images")
+          .upload(path, bidImage, { upsert: false, contentType: bidImage.type });
+        if (up.error) throw up.error;
+        const { data: pub } = supabase.storage.from("bid-images").getPublicUrl(path);
+        imageUrl = pub.publicUrl;
+      } finally {
+        setUploadingBidImage(false);
+      }
+    }
     const res = await fetch("/api/public/bids-create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -139,6 +159,7 @@ function TaskDetail() {
   bidderPiUid: session.user.uid,   // ← تأكد من وجود هذا السطر
   amount: Number(amount),
   message: message.trim() || undefined,
+  imageUrl,
 }),
     });
     if (!res.ok) {
@@ -150,6 +171,8 @@ function TaskDetail() {
   onSuccess: () => {
     setOpen(false);
     setMessage("");
+    setBidImage(null);
+    setBidImagePreview(null);
     fireConfetti();
     toast.success(t("task.offerSent"));
     queryClient.invalidateQueries({ queryKey: ["bids", task.id] });
@@ -346,13 +369,58 @@ function TaskDetail() {
                         className="rounded-xl"
                       />
                     </div>
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium">
+                        صورة (اختياري)
+                      </label>
+                      {bidImagePreview ? (
+                        <div className="relative inline-block">
+                          <img
+                            src={bidImagePreview}
+                            alt="bid attachment preview"
+                            className="h-28 w-28 rounded-xl object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setBidImage(null);
+                              setBidImagePreview(null);
+                            }}
+                            className="absolute -top-2 -end-2 rounded-full bg-destructive p-1 text-destructive-foreground shadow"
+                            aria-label="remove"
+                          >
+                            <X className="size-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted/40 p-4 text-sm text-muted-foreground transition hover:border-primary/50 hover:text-primary">
+                          <ImagePlus className="size-4" />
+                          اختر صورة
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (!f) return;
+                              if (f.size > 5 * 1024 * 1024) {
+                                toast.error("حجم الصورة كبير جداً (5MB كحد أقصى)");
+                                return;
+                              }
+                              setBidImage(f);
+                              setBidImagePreview(URL.createObjectURL(f));
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
                     <DialogFooter>
                       <Button
                         type="submit"
-                        disabled={createBid.isPending}
+                        disabled={createBid.isPending || uploadingBidImage}
                         className="w-full rounded-full gradient-brand text-white"
                       >
-                        {createBid.isPending ? (
+                        {createBid.isPending || uploadingBidImage ? (
                           <>
                             <Loader2 className="me-2 size-4 animate-spin" />
                             {t("task.submitting")}
