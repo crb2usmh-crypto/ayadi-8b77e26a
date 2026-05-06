@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
-import { Star, Edit3, Award, ListChecks, MessageSquare, Loader2 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
+import { Star, Edit3, Award, ListChecks, MessageSquare, Loader2, Camera } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,12 +12,13 @@ import { TaskCard } from "@/components/common/TaskCard";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { AyadiMiner } from "@/components/common/AyadiMiner";
 import { usePiAuth } from "@/components/providers/PiAuthProvider";
+import { supabase } from "@/lib/supabaseClient";
 import {
   profileQueryOptions,
   reviewsForUserQueryOptions,
   tasksByOwnerQueryOptions,
 } from "@/lib/supabase/queries";
-import { getAvatarUrl, type TaskWithOwner } from "@/lib/supabase/types";
+import { resolveAvatar, type TaskWithOwner } from "@/lib/supabase/types";
 import { ReviewsList } from "@/components/common/ReviewsList";
 
 export const Route = createFileRoute("/profile")({
@@ -32,6 +35,9 @@ function ProfilePage() {
   const { t } = useTranslation();
   const { session } = usePiAuth();
   const piUid = session?.user.uid ?? null;
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const { data: profile, isLoading: profileLoading } = useQuery(
     profileQueryOptions(piUid),
@@ -79,12 +85,57 @@ function ProfilePage() {
   // (the server upserts it on first sign-in / first task creation).
   const displayName =
     profile?.display_name || profile?.username || session.user.username;
-  const avatarSeed = profile?.avatar_seed || session.user.username;
+  const avatarSrc = resolveAvatar(profile, session.user.username, 160);
   const reviewsCount = reviewsData?.count ?? 0;
   const reviewAverage = reviewsData?.average ?? Number(profile?.rating ?? 0);
   const rating = Number(reviewAverage).toFixed(1);
   const completed = profile?.completed_tasks ?? 0;
   const published = profile?.published_tasks ?? ownTasks.length;
+
+  const handleAvatarPick = () => fileInputRef.current?.click();
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !session) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error(t("onboarding.avatarUploadFailed"));
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(t("onboarding.avatarUploadFailed"));
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase().slice(0, 5);
+      const path = `${session.user.uid}-${Date.now()}.${ext}`;
+      const up = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (up.error) throw up.error;
+      const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+      const publicUrl = pub.publicUrl;
+      const res = await fetch("/api/public/profile-update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accessToken: session.accessToken,
+          profile: { avatar_url: publicUrl },
+        }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error || t("onboarding.avatarUploadFailed"));
+      }
+      await queryClient.invalidateQueries({ queryKey: ["profile"] });
+      toast.success(t("onboarding.avatarUploaded"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("onboarding.avatarUploadFailed"));
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <PageTransition>
@@ -95,10 +146,32 @@ function ProfilePage() {
           <div className="px-6 pb-6">
             <div className="-mt-12 flex flex-col items-center gap-4 md:-mt-14 md:flex-row md:items-end md:justify-between">
               <div className="flex flex-col items-center gap-3 md:flex-row md:items-end">
-                <Avatar className="size-24 ring-4 ring-background shadow-xl md:size-28">
-                  <AvatarImage src={getAvatarUrl(avatarSeed, 160)} />
-                  <AvatarFallback>{displayName[0]?.toUpperCase()}</AvatarFallback>
-                </Avatar>
+                <div className="relative">
+                  <Avatar className="size-24 ring-4 ring-background shadow-xl md:size-28">
+                    <AvatarImage src={avatarSrc} />
+                    <AvatarFallback>{displayName[0]?.toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <button
+                    type="button"
+                    onClick={handleAvatarPick}
+                    disabled={uploading}
+                    className="absolute bottom-0 end-0 inline-flex size-9 items-center justify-center rounded-full gradient-brand text-white shadow-lg ring-2 ring-background transition hover:scale-105 disabled:opacity-60"
+                    aria-label={t("onboarding.uploadAvatar")}
+                  >
+                    {uploading ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Camera className="size-4" />
+                    )}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarChange}
+                  />
+                </div>
                 <div className="text-center md:text-start md:pb-2">
                   <h1 className="text-2xl font-bold">{displayName}</h1>
                   <div className="mt-1 flex items-center justify-center gap-1 text-sm md:justify-start">
@@ -113,9 +186,11 @@ function ProfilePage() {
                   </div>
                 </div>
               </div>
-              <Button variant="outline" className="rounded-full bg-background/60 backdrop-blur">
-                <Edit3 className="size-4" />
-                {t("profile.edit")}
+              <Button asChild variant="outline" className="rounded-full bg-background/60 backdrop-blur">
+                <Link to="/onboarding">
+                  <Edit3 className="size-4" />
+                  {t("profile.edit")}
+                </Link>
               </Button>
             </div>
           </div>

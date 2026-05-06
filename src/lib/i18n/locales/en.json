@@ -213,10 +213,18 @@
     "fullName": "Full name",
     "email": "Email",
     "address": "Full address",
+    "street": "Street / neighborhood",
+    "city": "City",
+    "state": "State / province",
+    "postalCode": "Postal code",
+    "addressHint": "These fields are combined into a single address",
     "country": "Country",
     "save": "Save and continue",
     "success": "Profile saved ✅",
     "fieldRequired": "All fields are required",
-    "saveFailed": "Could not save your details"
+    "saveFailed": "Could not save your details",
+    "uploadAvatar": "Change avatar",
+    "avatarUploaded": "Avatar updated ✅",
+    "avatarUploadFailed": "Could not upload avatar"
   }
 }

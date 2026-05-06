@@ -38,6 +38,7 @@ export interface ProfileRow {
   country: string | null;
   preferred_lang: string | null;
   onboarded_at: string | null;
+  avatar_url: string | null;
 }
 
 export interface TaskRow {
@@ -95,6 +96,7 @@ export interface BidRow {
   status: BidStatus;
   created_at: string;
   updated_at: string;
+  image_url: string | null;
 }
 
 /** A bid joined with its bidder's profile (returned by bids-list). */
@@ -161,6 +163,21 @@ export const CATEGORY_KEYS: TaskCategory[] = [
 export function getAvatarUrl(seed: string | null | undefined, size = 96): string {
   const safe = seed && seed.length > 0 ? seed : "anon";
   return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(safe)}&size=${size}`;
+}
+
+/** Resolve a profile's avatar to a usable URL — prefer uploaded avatar, fall back to dicebear. */
+export function resolveAvatar(
+  profile:
+    | Pick<ProfileRow, "avatar_url" | "avatar_seed" | "username">
+    | null
+    | undefined,
+  fallbackSeed?: string | null,
+  size = 96,
+): string {
+  if (profile?.avatar_url) return profile.avatar_url;
+  const seed =
+    profile?.avatar_seed || profile?.username || fallbackSeed || "anon";
+  return getAvatarUrl(seed, size);
 }
 
 export function getTaskImage(seed: string | null | undefined, w = 800, h = 500): string {

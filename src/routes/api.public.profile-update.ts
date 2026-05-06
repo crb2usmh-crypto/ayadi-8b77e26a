@@ -117,6 +117,21 @@ export const Route = createFileRoute("/api/public/profile-update")({
           update.preferred_lang = p.preferred_lang;
         }
 
+        if (p.avatar_url !== undefined) {
+          if (p.avatar_url === null || p.avatar_url === "") {
+            update.avatar_url = null;
+          } else {
+            const v = clamp(p.avatar_url, 5, 1024);
+            if (v === null || !/^https:\/\//i.test(v)) {
+              return Response.json(
+                { error: "رابط الصورة غير صالح" },
+                { status: 400 },
+              );
+            }
+            update.avatar_url = v;
+          }
+        }
+
         if (Object.keys(update).length === 0) {
           return Response.json(
             { error: "لا توجد حقول للتحديث" },
