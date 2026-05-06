@@ -1,11 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { adminHeaders, getSupabaseAdminEnv } from "@/lib/server/piVerify.server";
+import {
+  adminHeaders,
+  getSupabaseAdminEnv,
+} from "@/lib/server/piVerify";
 
 export const Route = createFileRoute("/api/public/tasks-delete")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        let body: { accessToken?: unknown; taskId?: unknown };
+        let body: any;
         try {
           body = await request.json();
         } catch {
@@ -17,7 +20,7 @@ export const Route = createFileRoute("/api/public/tasks-delete")({
           return Response.json({ error: "معرف المهمة غير صالح" }, { status: 400 });
         }
 
-        const accessToken = typeof body.accessToken === "string" ? body.accessToken.trim() : "";
+        const accessToken = body.accessToken;
         if (!accessToken) {
           return Response.json({ error: "Token مفقود" }, { status: 400 });
         }
@@ -25,7 +28,7 @@ export const Route = createFileRoute("/api/public/tasks-delete")({
         const env = getSupabaseAdminEnv();
         if (!env) return Response.json({ error: "Service unavailable" }, { status: 500 });
 
-        // استخراج pi_uid من Pi API
+        // استخراج pi_uid من Pi
         let piUid: string;
         try {
           const piRes = await fetch("https://api.minepi.com/v2/me", {
@@ -38,7 +41,7 @@ export const Route = createFileRoute("/api/public/tasks-delete")({
           return Response.json({ error: "Invalid Pi token" }, { status: 401 });
         }
 
-        // حذف المهمة إذا كان المستخدم هو المالك
+        // حذف المهمة بشرط أن يكون المستخدم هو المالك
         const delRes = await fetch(
           `${env.url}/rest/v1/tasks?owner_pi_uid=eq.${encodeURIComponent(piUid)}&id=eq.${encodeURIComponent(taskId)}`,
           {
@@ -48,8 +51,6 @@ export const Route = createFileRoute("/api/public/tasks-delete")({
         );
 
         if (!delRes.ok) {
-          const errText = await delRes.text();
-          console.error("[tasks-delete] delete failed:", errText);
           return Response.json({ error: "فشل حذف المهمة" }, { status: 500 });
         }
 
