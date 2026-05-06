@@ -64,12 +64,9 @@ function saveSession(session: PiSession | null) {
 export function PiAuthProvider({ children }: { children: ReactNode }) {
   const [isPiBrowser, setIsPiBrowser] = useState(false);
   const [session, setSession] = useState<PiSession | null>(null);
-  // Start bootstrapping ONLY if a persisted session exists; otherwise we know
-  // immediately that the user is unauthenticated and the auth gate can fire.
-  const [bootstrapping, setBootstrapping] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return !!window.localStorage.getItem(STORAGE_KEY);
-  });
+  // Start consistently on server and client; localStorage is checked after mount
+  // to avoid SSR hydration mismatches.
+  const [bootstrapping, setBootstrapping] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
