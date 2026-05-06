@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   adminHeaders,
   getSupabaseAdminEnv,
-} from "@/lib/server/piVerify";
+} from "@/lib/server/piVerify.server";
 
 export const Route = createFileRoute("/api/public/tasks-delete")({
   server: {
