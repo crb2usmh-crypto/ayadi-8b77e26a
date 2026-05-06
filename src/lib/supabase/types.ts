@@ -38,6 +38,7 @@ export interface ProfileRow {
   country: string | null;
   preferred_lang: string | null;
   onboarded_at: string | null;
+  avatar_url: string | null;
 }
 
 export interface TaskRow {
@@ -95,6 +96,7 @@ export interface BidRow {
   status: BidStatus;
   created_at: string;
   updated_at: string;
+  image_url: string | null;
 }
 
 /** A bid joined with its bidder's profile (returned by bids-list). */
