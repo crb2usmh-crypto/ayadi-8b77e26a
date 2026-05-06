@@ -77,4 +77,4 @@ export const Route = createFileRoute("/api/public/reviews-for-task")({
       },
     },
   },
-} as any);
+});

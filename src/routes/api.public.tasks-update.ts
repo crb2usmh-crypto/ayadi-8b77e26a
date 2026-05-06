@@ -233,4 +233,4 @@ export const Route = createFileRoute("/api/public/tasks-update")({
       },
     },
   },
-} as any);
+});

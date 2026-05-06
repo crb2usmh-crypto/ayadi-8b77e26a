@@ -133,4 +133,4 @@ export const Route = createFileRoute("/api/public/tasks-complete")({
       },
     },
   },
-} as any);
+});

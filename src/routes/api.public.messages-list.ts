@@ -96,4 +96,4 @@ export const Route = createFileRoute("/api/public/messages-list")({
       },
     },
   },
-} as any);
+});

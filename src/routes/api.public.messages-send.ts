@@ -128,4 +128,4 @@ export const Route = createFileRoute("/api/public/messages-send")({
       },
     },
   },
-} as any);
+});

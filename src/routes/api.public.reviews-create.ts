@@ -167,4 +167,4 @@ export const Route = createFileRoute("/api/public/reviews-create")({
       },
     },
   },
-} as any);
+});
