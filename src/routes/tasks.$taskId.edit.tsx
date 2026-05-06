@@ -152,7 +152,7 @@ function EditTaskPage() {
               <SelectContent>
                 {COUNTRIES.map((c) => (
                   <SelectItem key={c.code} value={c.code}>
-                    {c.name_ar}
+                    {c.ar}
                   </SelectItem>
                 ))}
               </SelectContent>
