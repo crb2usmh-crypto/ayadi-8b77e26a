@@ -63,4 +63,4 @@ export const Route = createFileRoute("/api/public/bids-list")({
       },
     },
   },
-} as any);
+});

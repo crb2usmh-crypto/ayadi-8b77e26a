@@ -87,4 +87,4 @@ export const Route = createFileRoute("/api/public/pi-verify")({
       },
     },
   },
-} as any);
+});

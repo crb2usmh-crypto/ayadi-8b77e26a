@@ -93,4 +93,4 @@ export const Route = createFileRoute("/api/public/notifications")({
       },
     },
   },
-} as any);
+});
