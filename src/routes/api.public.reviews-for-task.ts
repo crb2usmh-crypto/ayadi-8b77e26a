@@ -3,7 +3,7 @@ import {
   adminHeaders,
   getSupabaseAdminEnv,
   verifyPiToken,
-} from "@/lib/server/piVerify";
+} from "@/lib/server/piVerify.server";
 import type { ProfileRow, ReviewRow } from "@/lib/supabase/types";
 
 /**

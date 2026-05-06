@@ -5,7 +5,7 @@ import {
   getSupabaseAdminEnv,
   insertNotification,
   verifyPiToken,
-} from "@/lib/server/piVerify";
+} from "@/lib/server/piVerify.server";
 
 /**
  * Accept a bid. Only the task owner can call this.

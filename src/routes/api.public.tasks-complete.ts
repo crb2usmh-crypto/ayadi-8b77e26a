@@ -5,7 +5,7 @@ import {
   getSupabaseAdminEnv,
   insertNotification,
   verifyPiToken,
-} from "@/lib/server/piVerify";
+} from "@/lib/server/piVerify.server";
 
 /**
  * Mark a task as completed. Only the task owner can do this, and the task

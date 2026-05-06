@@ -3,7 +3,7 @@ import {
   adminHeaders,
   getSupabaseAdminEnv,
   verifyPiToken,
-} from "@/lib/server/piVerify";
+} from "@/lib/server/piVerify.server";
 
 /**
  * List conversations the caller is a participant in (owner or bidder).

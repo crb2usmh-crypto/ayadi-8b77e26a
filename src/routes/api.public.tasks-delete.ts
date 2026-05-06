@@ -3,7 +3,7 @@ import {
   adminHeaders,
   getSupabaseAdminEnv,
   verifyPiToken,
-} from "@/lib/server/piVerify";
+} from "@/lib/server/piVerify.server";
 
 /**
  * Delete a task. Only the task owner can delete it, and only when the

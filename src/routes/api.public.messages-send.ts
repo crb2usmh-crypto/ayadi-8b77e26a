@@ -5,7 +5,7 @@ import {
   getSupabaseAdminEnv,
   insertNotification,
   verifyPiToken,
-} from "@/lib/server/piVerify";
+} from "@/lib/server/piVerify.server";
 
 /**
  * Send a message inside a conversation. Caller must be one of the
