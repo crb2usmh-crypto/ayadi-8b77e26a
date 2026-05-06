@@ -3,7 +3,7 @@ import {
   adminHeaders,
   getSupabaseAdminEnv,
   verifyPiToken,
-} from "@/lib/server/piVerify";
+} from "@/lib/server/piVerify.server";
 import { isValidCountryCode } from "@/lib/data/countries";
 
 /**

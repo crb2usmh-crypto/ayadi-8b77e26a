@@ -3,7 +3,7 @@ import {
   verifyPiToken,
   getSupabaseAdminEnv,
   adminHeaders,
-} from "@/lib/server/piVerify";
+} from "@/lib/server/piVerify.server";
 
 /**
  * Returns the current Ayadi-token balance, cooldown status, and the

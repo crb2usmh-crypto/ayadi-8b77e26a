@@ -3,7 +3,7 @@ import {
   adminHeaders,
   getSupabaseAdminEnv,
   verifyPiToken,
-} from "@/lib/server/piVerify";
+} from "@/lib/server/piVerify.server";
 
 /**
  * List messages of a conversation. Caller MUST be one of the two

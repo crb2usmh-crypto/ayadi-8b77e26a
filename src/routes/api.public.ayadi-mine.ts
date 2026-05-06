@@ -4,7 +4,7 @@ import {
   getSupabaseAdminEnv,
   adminHeaders,
   ensureProfile,
-} from "@/lib/server/piVerify";
+} from "@/lib/server/piVerify.server";
 
 /**
  * Daily Ayadi-token mining endpoint.

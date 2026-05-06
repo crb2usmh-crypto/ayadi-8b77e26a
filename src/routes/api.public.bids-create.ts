@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   adminHeaders,
   getSupabaseAdminEnv,
-} from "@/lib/server/piVerify";
+} from "@/lib/server/piVerify.server";
 import type { TaskRow } from "@/lib/supabase/types";
 
 export const Route = createFileRoute("/api/public/bids-create")({

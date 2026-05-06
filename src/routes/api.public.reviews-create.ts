@@ -5,7 +5,7 @@ import {
   getSupabaseAdminEnv,
   insertNotification,
   verifyPiToken,
-} from "@/lib/server/piVerify";
+} from "@/lib/server/piVerify.server";
 
 /**
  * Submit a review on a completed task.
