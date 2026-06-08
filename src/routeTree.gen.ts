@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as TasksIndexRouteImport } from './routes/tasks.index'
 import { Route as MessagesIndexRouteImport } from './routes/messages.index'
 import { Route as TasksTaskIdRouteImport } from './routes/tasks.$taskId'
+import { Route as ProfileEditRouteImport } from './routes/profile.edit'
 import { Route as MessagesConversationIdRouteImport } from './routes/messages.$conversationId'
 import { Route as TasksTaskIdEditRouteImport } from './routes/tasks.$taskId.edit'
 import { Route as ApiPublicValidationKeyRouteImport } from './routes/api.public.validation-key'
@@ -84,6 +85,11 @@ const TasksTaskIdRoute = TasksTaskIdRouteImport.update({
   id: '/tasks/$taskId',
   path: '/tasks/$taskId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileEditRoute = ProfileEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => ProfileRoute,
 } as any)
 const MessagesConversationIdRoute = MessagesConversationIdRouteImport.update({
   id: '/$conversationId',
@@ -198,8 +204,9 @@ export interface FileRoutesByFullPath {
   '/messages': typeof MessagesRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/post-task': typeof PostTaskRoute
-  '/profile': typeof ProfileRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/messages/$conversationId': typeof MessagesConversationIdRoute
+  '/profile/edit': typeof ProfileEditRoute
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/messages/': typeof MessagesIndexRoute
   '/tasks/': typeof TasksIndexRoute
@@ -229,8 +236,9 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/onboarding': typeof OnboardingRoute
   '/post-task': typeof PostTaskRoute
-  '/profile': typeof ProfileRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/messages/$conversationId': typeof MessagesConversationIdRoute
+  '/profile/edit': typeof ProfileEditRoute
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/messages': typeof MessagesIndexRoute
   '/tasks': typeof TasksIndexRoute
@@ -262,8 +270,9 @@ export interface FileRoutesById {
   '/messages': typeof MessagesRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/post-task': typeof PostTaskRoute
-  '/profile': typeof ProfileRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/messages/$conversationId': typeof MessagesConversationIdRoute
+  '/profile/edit': typeof ProfileEditRoute
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/messages/': typeof MessagesIndexRoute
   '/tasks/': typeof TasksIndexRoute
@@ -298,6 +307,7 @@ export interface FileRouteTypes {
     | '/post-task'
     | '/profile'
     | '/messages/$conversationId'
+    | '/profile/edit'
     | '/tasks/$taskId'
     | '/messages/'
     | '/tasks/'
@@ -329,6 +339,7 @@ export interface FileRouteTypes {
     | '/post-task'
     | '/profile'
     | '/messages/$conversationId'
+    | '/profile/edit'
     | '/tasks/$taskId'
     | '/messages'
     | '/tasks'
@@ -361,6 +372,7 @@ export interface FileRouteTypes {
     | '/post-task'
     | '/profile'
     | '/messages/$conversationId'
+    | '/profile/edit'
     | '/tasks/$taskId'
     | '/messages/'
     | '/tasks/'
@@ -392,7 +404,7 @@ export interface RootRouteChildren {
   MessagesRoute: typeof MessagesRouteWithChildren
   OnboardingRoute: typeof OnboardingRoute
   PostTaskRoute: typeof PostTaskRoute
-  ProfileRoute: typeof ProfileRoute
+  ProfileRoute: typeof ProfileRouteWithChildren
   TasksTaskIdRoute: typeof TasksTaskIdRouteWithChildren
   TasksIndexRoute: typeof TasksIndexRoute
   ApiPublicAyadiBalanceRoute: typeof ApiPublicAyadiBalanceRoute
@@ -480,6 +492,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/tasks/$taskId'
       preLoaderRoute: typeof TasksTaskIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/profile/edit': {
+      id: '/profile/edit'
+      path: '/edit'
+      fullPath: '/profile/edit'
+      preLoaderRoute: typeof ProfileEditRouteImport
+      parentRoute: typeof ProfileRoute
     }
     '/messages/$conversationId': {
       id: '/messages/$conversationId'
@@ -645,6 +664,17 @@ const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
   MessagesRouteChildren,
 )
 
+interface ProfileRouteChildren {
+  ProfileEditRoute: typeof ProfileEditRoute
+}
+
+const ProfileRouteChildren: ProfileRouteChildren = {
+  ProfileEditRoute: ProfileEditRoute,
+}
+
+const ProfileRouteWithChildren =
+  ProfileRoute._addFileChildren(ProfileRouteChildren)
+
 interface TasksTaskIdRouteChildren {
   TasksTaskIdEditRoute: typeof TasksTaskIdEditRoute
 }
@@ -663,7 +693,7 @@ const rootRouteChildren: RootRouteChildren = {
   MessagesRoute: MessagesRouteWithChildren,
   OnboardingRoute: OnboardingRoute,
   PostTaskRoute: PostTaskRoute,
-  ProfileRoute: ProfileRoute,
+  ProfileRoute: ProfileRouteWithChildren,
   TasksTaskIdRoute: TasksTaskIdRouteWithChildren,
   TasksIndexRoute: TasksIndexRoute,
   ApiPublicAyadiBalanceRoute: ApiPublicAyadiBalanceRoute,
