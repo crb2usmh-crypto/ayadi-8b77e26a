@@ -246,7 +246,7 @@ function PostTask() {
                     <Input
                       value={form.deadline}
                       onChange={(e) => update("deadline", e.target.value)}
-                      placeholder={t("post.deadlinePh")}
+                      placeholder={t("post.deadlinePh", "أي صيغة، مثل: خلال أسبوع، 2026-07-01")}
                       className="h-12 rounded-xl"
                     />
                   </Field>

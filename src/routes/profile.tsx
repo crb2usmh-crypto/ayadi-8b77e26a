@@ -187,7 +187,7 @@ function ProfilePage() {
                 </div>
               </div>
               <Button asChild variant="outline" className="rounded-full bg-background/60 backdrop-blur">
-                <Link to="/onboarding">
+                <Link to="/profile/edit">
                   <Edit3 className="size-4" />
                   {t("profile.edit")}
                 </Link>
