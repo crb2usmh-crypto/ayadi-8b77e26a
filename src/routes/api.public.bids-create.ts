@@ -1,5 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { adminHeaders, getSupabaseAdminEnv } from "@/lib/server/piVerify";
+import {
+  adminHeaders,
+  getSupabaseAdminEnv,
+  verifyPiToken,
+  ensureProfile,
+} from "@/lib/server/piVerify.server";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function withDetails(
+  payload: { error: string },
+  detail: string | undefined,
+): Record<string, unknown> {
+  if (process.env.ALLOW_DEV_MODE === "true" && detail) {
+    return { ...payload, details: detail };
+  }
+  return payload;
+}
 
 export const Route = createFileRoute("/api/public/bids-create")({
   server: {
@@ -13,7 +30,7 @@ export const Route = createFileRoute("/api/public/bids-create")({
         }
 
         const taskId = typeof body.taskId === "string" ? body.taskId.trim() : "";
-        if (!taskId || taskId.length > 64) {
+        if (!taskId || !UUID_RE.test(taskId)) {
           return Response.json({ error: "معرف المهمة غير صالح" }, { status: 400 });
         }
 
@@ -28,6 +45,24 @@ export const Route = createFileRoute("/api/public/bids-create")({
         }
 
         const message = typeof body.message === "string" ? body.message.trim() : "";
+        const accessToken = typeof body.accessToken === "string" ? body.accessToken.trim() : "";
+        const imageUrlRaw = typeof body.imageUrl === "string" ? body.imageUrl.trim() : "";
+        const imageUrl =
+          imageUrlRaw && /^https:\/\//i.test(imageUrlRaw) && imageUrlRaw.length <= 1024
+            ? imageUrlRaw
+            : null;
+
+        // Verify Pi identity
+        const verify = await verifyPiToken(accessToken);
+        if (!verify.ok) {
+          return Response.json(
+            { error: "فشلت مصادقة Pi، يرجى تسجيل الدخول مجددًا" },
+            { status: verify.status },
+          );
+        }
+        if (verify.identity.uid !== bidderPiUid) {
+          return Response.json({ error: "عدم تطابق الهوية" }, { status: 403 });
+        }
 
         const env = getSupabaseAdminEnv();
         if (!env) {
@@ -35,6 +70,15 @@ export const Route = createFileRoute("/api/public/bids-create")({
         }
 
         try {
+          // Make sure profile row exists (FK on bids.bidder_pi_uid)
+          const ensured = await ensureProfile(env, verify.identity);
+          if (!ensured.ok) {
+            return Response.json(
+              withDetails({ error: "تعذّر تجهيز ملف المستخدم" }, ensured.detail),
+              { status: ensured.status },
+            );
+          }
+
           // 1. تحقق من وجود المهمة
           const taskReq = await fetch(
             `${env.url}/rest/v1/tasks?id=eq.${encodeURIComponent(taskId)}&select=id,status,owner_pi_uid`,
@@ -53,31 +97,41 @@ export const Route = createFileRoute("/api/public/bids-create")({
           }
 
           // 2. أدخل العرض
+          const bidRow: Record<string, unknown> = {
+            task_id: taskId,
+            bidder_pi_uid: bidderPiUid,
+            amount: amountNum,
+            message: message,
+            status: "pending",
+          };
+          if (imageUrl) bidRow.image_url = imageUrl;
+
           const insertReq = await fetch(
             `${env.url}/rest/v1/bids`,
             {
               method: "POST",
               headers: { ...adminHeaders(env), "Content-Type": "application/json", "Prefer": "return=representation" },
-              body: JSON.stringify({
-                task_id: Number(taskId),
-                bidder_pi_uid: bidderPiUid,
-                amount: amountNum,
-                message: message,
-                status: "pending",
-              }),
+              body: JSON.stringify(bidRow),
             },
           );
           if (!insertReq.ok) {
             const errText = await insertReq.text();
             console.error("[bids-create] insert failed:", errText);
-            return Response.json({ error: "تعذر حفظ العرض" }, { status: 500 });
+            return Response.json(
+              withDetails({ error: "تعذر حفظ العرض" }, `${insertReq.status} ${errText}`),
+              { status: 500 },
+            );
           }
           const [newBid] = await insertReq.json();
 
           return Response.json({ bid: newBid ?? null });
         } catch (err) {
           console.error("[bids-create] error:", err);
-          return Response.json({ error: "Server error" }, { status: 500 });
+          const detail = err instanceof Error ? err.message : String(err);
+          return Response.json(
+            withDetails({ error: "خطأ في الخادم" }, detail),
+            { status: 500 },
+          );
         }
       },
     },
