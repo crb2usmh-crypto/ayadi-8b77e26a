@@ -21,6 +21,7 @@ import { usePiAuth } from "@/components/providers/PiAuthProvider";
 import { profileQueryOptions } from "@/lib/supabase/queries";
 import { resolveAvatar } from "@/lib/supabase/types";
 import { supabase } from "@/lib/supabaseClient";
+import { compressImage } from "@/lib/image-compress";
 import { COUNTRIES } from "@/lib/data/countries";
 
 export const Route = createFileRoute("/profile/edit")({
@@ -102,11 +103,12 @@ function ProfileEditPage() {
     }
     setUploading(true);
     try {
-      const ext = (file.name.split(".").pop() || "jpg").toLowerCase().slice(0, 5);
+      const compressed = await compressImage(file, { maxSize: 512, quality: 0.82 });
+      const ext = (compressed.name.split(".").pop() || "jpg").toLowerCase().slice(0, 5);
       const path = `${session.user.uid}-${Date.now()}.${ext}`;
       const up = await supabase.storage
         .from("avatars")
-        .upload(path, file, { upsert: true, contentType: file.type });
+        .upload(path, compressed, { upsert: true, contentType: compressed.type });
       if (up.error) throw up.error;
       const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
       setAvatarUrl(pub.publicUrl);
