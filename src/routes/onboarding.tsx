@@ -16,6 +16,7 @@ import {
 import { PageTransition } from "@/components/layout/PageTransition";
 import { usePiAuth } from "@/components/providers/PiAuthProvider";
 import { profileQueryOptions } from "@/lib/supabase/queries";
+import { tasksQueryOptions } from "@/lib/supabase/queries";
 import { COUNTRIES } from "@/lib/data/countries";
 
 export const Route = createFileRoute("/onboarding")({
@@ -36,6 +37,12 @@ function OnboardingPage() {
   const piUid = session?.user.uid ?? null;
 
   const { data: profile, isLoading } = useQuery(profileQueryOptions(piUid));
+
+  // Prefetch the home page data while the user fills in the form so the
+  // post-save navigation is instant.
+  useEffect(() => {
+    queryClient.prefetchQuery(tasksQueryOptions());
+  }, [queryClient]);
 
   const [form, setForm] = useState({
     full_name: "",
@@ -88,36 +95,59 @@ function OnboardingPage() {
       .filter(Boolean)
       .join("، ");
     setSubmitting(true);
-    try {
-      const res = await fetch("/api/public/profile-update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          accessToken: session.accessToken,
-          profile: {
-            full_name: form.full_name,
-            email: form.email,
-            address,
-            country: form.country,
-          },
-        }),
-      });
-      if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as {
-          error?: string;
-          details?: string;
-        };
-        const base = body.error || t("onboarding.saveFailed");
-        throw new Error(body.details ? `${base} — ${body.details}` : base);
+
+    // --- Optimistic update: write the new profile into the cache and
+    // navigate immediately. The server call runs in the background; on
+    // failure we roll back and surface the error.
+    const profileKey = ["profile", piUid ?? "anon"];
+    const previous = queryClient.getQueryData(profileKey);
+    queryClient.setQueryData(profileKey, (old: unknown) => {
+      const base = (old && typeof old === "object" ? old : {}) as Record<string, unknown>;
+      return {
+        ...base,
+        pi_uid: piUid,
+        full_name: form.full_name,
+        email: form.email,
+        address,
+        country: form.country,
+        onboarded_at: new Date().toISOString(),
+      };
+    });
+    toast.success(t("onboarding.success"));
+    navigate({ to: "/" });
+
+    void (async () => {
+      try {
+        const res = await fetch("/api/public/profile-update", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            accessToken: session.accessToken,
+            profile: {
+              full_name: form.full_name,
+              email: form.email,
+              address,
+              country: form.country,
+            },
+          }),
+        });
+        if (!res.ok) {
+          const body = (await res.json().catch(() => ({}))) as {
+            error?: string;
+            details?: string;
+          };
+          const base = body.error || t("onboarding.saveFailed");
+          throw new Error(body.details ? `${base} — ${body.details}` : base);
+        }
+        await queryClient.invalidateQueries({ queryKey: ["profile"] });
+      } catch (err) {
+        // Rollback the optimistic cache write.
+        queryClient.setQueryData(profileKey, previous);
+        toast.error(err instanceof Error ? err.message : "Error");
+      } finally {
+        setSubmitting(false);
       }
-      await queryClient.invalidateQueries({ queryKey: ["profile"] });
-      toast.success(t("onboarding.success"));
-      navigate({ to: "/" });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Error");
-    } finally {
-      setSubmitting(false);
-    }
+    })();
   };
 
   return (
