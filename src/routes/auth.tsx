@@ -1,10 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Hand, Shield, Wallet, ExternalLink, LogIn } from "lucide-react";
+import { Hand, Shield, Wallet, ExternalLink, LogIn, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GradientOrbs } from "@/components/layout/GradientOrbs";
 import { usePiAuth } from "@/components/providers/PiAuthProvider";
