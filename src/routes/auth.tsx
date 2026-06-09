@@ -3,9 +3,12 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Hand, Shield, Wallet, ExternalLink, LogIn } from "lucide-react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GradientOrbs } from "@/components/layout/GradientOrbs";
 import { usePiAuth } from "@/components/providers/PiAuthProvider";
+import { tasksQueryOptions } from "@/lib/supabase/queries";
 
 // Replace with your actual Pi app slug from the Pi Developer Portal.
 const PI_APP_URL = "https://pinet.com/YOUR_APP";
@@ -17,6 +20,7 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { isPiBrowser, isDevModeAllowed, session, bootstrapping, loading, error, login, loginAsDev } = usePiAuth();
   const tapCountRef = useRef(0);
   const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -31,6 +35,9 @@ function AuthPage() {
 
   const handleLogin = async () => {
     try {
+      // Kick off the home-page data fetch in parallel with auth so the
+      // landing screen feels instant after sign-in.
+      queryClient.prefetchQuery(tasksQueryOptions());
       await login(["username"]);
       toast.success(t("auth.loginSuccess"));
       // AppShell's onboarding gate will route to /onboarding or / as needed.
@@ -60,6 +67,18 @@ function AuthPage() {
     <div className="relative flex min-h-screen items-center justify-center px-4 py-10 bg-gradient-page-auth">
       <GradientOrbs />
       <div className="w-full max-w-md">
+        {loading && (
+          <div
+            className="fixed inset-0 z-40 flex items-center justify-center bg-background/60 backdrop-blur-sm"
+            role="status"
+            aria-live="polite"
+          >
+            <div className="glass-card flex items-center gap-3 rounded-2xl px-5 py-4 shadow-2xl">
+              <Loader2 className="size-5 animate-spin text-primary" />
+              <span className="text-sm font-medium">{t("auth.piSignIn")}…</span>
+            </div>
+          </div>
+        )}
         <button
           type="button"
           onClick={handleSecretTap}
