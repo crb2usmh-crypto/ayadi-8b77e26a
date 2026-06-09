@@ -138,11 +138,13 @@ function TaskDetail() {
     if (bidImage) {
       setUploadingBidImage(true);
       try {
-        const ext = (bidImage.name.split(".").pop() || "jpg").toLowerCase().slice(0, 5);
+        const { compressImage } = await import("@/lib/image-compress");
+        const compressed = await compressImage(bidImage, { maxSize: 1280, quality: 0.8 });
+        const ext = (compressed.name.split(".").pop() || "jpg").toLowerCase().slice(0, 5);
         const path = `${session.user.uid}-${task.id}-${Date.now()}.${ext}`;
         const up = await supabase.storage
           .from("bid-images")
-          .upload(path, bidImage, { upsert: false, contentType: bidImage.type });
+          .upload(path, compressed, { upsert: false, contentType: compressed.type });
         if (up.error) throw up.error;
         const { data: pub } = supabase.storage.from("bid-images").getPublicUrl(path);
         imageUrl = pub.publicUrl;

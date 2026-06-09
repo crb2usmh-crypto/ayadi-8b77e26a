@@ -110,7 +110,13 @@ export function PiAuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Validate persisted Pi access token against the server.
+    // Optimistic bootstrap: trust the stored session immediately so the UI
+    // can render, then re-verify against the server in the background.
+    // If verification fails, we clear the session — the next render will
+    // bounce the user back to /auth via the normal route guards.
+    setSession(stored);
+    setBootstrapping(false);
+
     let cancelled = false;
     (async () => {
       try {
@@ -121,19 +127,13 @@ export function PiAuthProvider({ children }: { children: ReactNode }) {
         });
         if (cancelled) return;
         if (!res.ok) {
-          // Token rejected by Pi — clear and force re-login.
           saveSession(null);
           setSession(null);
           setError("sessionExpired");
-        } else {
-          setSession(stored);
         }
       } catch {
-        // Network failure: keep the session optimistically (offline tolerance)
-        // but the next protected server call will re-verify.
-        if (!cancelled) setSession(stored);
-      } finally {
-        if (!cancelled) setBootstrapping(false);
+        // Network failure: keep the optimistic session — protected server
+        // calls will fail individually and re-prompt for login if needed.
       }
     })();
 
