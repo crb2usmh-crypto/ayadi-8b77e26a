@@ -86,6 +86,16 @@ export function PiAuthProvider({ children }: { children: ReactNode }) {
   // Detect Pi Browser & init SDK on mount.
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (import.meta.env.DEV) {
+      // Diagnostic: confirm Supabase env vars reached the client bundle.
+      // Logs presence only — never the values.
+      console.log(
+        "[ayadi-env] VITE_SUPABASE_URL present:",
+        Boolean(import.meta.env.VITE_SUPABASE_URL),
+        "| VITE_SUPABASE_ANON_KEY present:",
+        Boolean(import.meta.env.VITE_SUPABASE_ANON_KEY),
+      );
+    }
     setIsPiBrowser(detectPiBrowser());
     // sandbox=true only outside production; sandbox=false in published prod app.
     initPi(isDevModeAllowed);
