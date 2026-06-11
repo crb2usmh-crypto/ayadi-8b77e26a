@@ -12,7 +12,7 @@ import { TaskCard } from "@/components/common/TaskCard";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { AyadiMiner } from "@/components/common/AyadiMiner";
 import { usePiAuth } from "@/components/providers/PiAuthProvider";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClientNew";
 import { compressImage } from "@/lib/image-compress";
 import {
   profileQueryOptions,
