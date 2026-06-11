@@ -58,10 +58,20 @@ export function AppShell({ children }: { children: ReactNode }) {
     }
   }, [session, profile, profileLoading, profileError, bootstrapping, isOnboarding, isAuth, navigate]);
 
-  // Apply persisted language preference once.
+  // Apply persisted language preference once (post-hydration, so SSR matches).
   useEffect(() => {
-    const pref = profile?.preferred_lang;
-    if (pref && (pref === "ar" || pref === "en") && pref !== i18n.language) {
+    let pref: "ar" | "en" | null = null;
+    const stored = (() => {
+      try {
+        return window.localStorage.getItem("ayadi-lang");
+      } catch {
+        return null;
+      }
+    })();
+    if (stored === "ar" || stored === "en") pref = stored;
+    const fromProfile = profile?.preferred_lang;
+    if (fromProfile === "ar" || fromProfile === "en") pref = fromProfile;
+    if (pref && pref !== i18n.language) {
       i18n.changeLanguage(pref);
       try {
         window.localStorage.setItem("ayadi-lang", pref);
