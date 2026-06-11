@@ -59,19 +59,19 @@ function HomePage() {
   return (
     <PageTransition>
       <div className="mx-auto max-w-7xl px-4 py-8 md:px-8 md:py-12 md:ps-24">
-        {/* Temporary Supabase connection diagnostic */}
-        <div
-          className={cn(
-            "mb-4 rounded-xl px-4 py-2 text-sm font-medium",
-            ping.isLoading && "bg-muted text-muted-foreground",
-            ping.isError && "bg-destructive/10 text-destructive",
-            ping.isSuccess && "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-          )}
-        >
-          {ping.isLoading && "… يجري اختبار الاتصال بـ Supabase"}
-          {ping.isError && `✗ فشل الاتصال: ${ping.error instanceof Error ? ping.error.message : String(ping.error)}`}
-          {ping.isSuccess && `✓ Supabase متصل — عدد المهام: ${ping.data}`}
-        </div>
+        {/* Temporary Supabase connection diagnostic — يختفي بعد نجاح أول استعلام */}
+        {!ping.isSuccess && (
+          <div
+            className={cn(
+              "mb-4 rounded-xl px-4 py-2 text-sm font-medium",
+              ping.isLoading && "bg-muted text-muted-foreground",
+              ping.isError && "bg-destructive/10 text-destructive",
+            )}
+          >
+            {ping.isLoading && "… يجري اختبار الاتصال بـ Supabase"}
+            {ping.isError && `✗ فشل الاتصال: ${ping.error instanceof Error ? ping.error.message : String(ping.error)}`}
+          </div>
+        )}
 
         {/* HERO */}
         <section className="relative">
