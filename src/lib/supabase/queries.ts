@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClientNew";
 import type {
   BidWithBidder,
   ConversationWithDetails,

@@ -39,7 +39,7 @@ import { fireConfetti } from "@/lib/confetti";
 import { usePiAuth } from "@/components/providers/PiAuthProvider";
 import { ReviewForm } from "@/components/common/ReviewForm";
 import { ReviewsList } from "@/components/common/ReviewsList";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClientNew";
 
 export const Route = createFileRoute("/tasks/$taskId")({
   loader: async ({ params, context: { queryClient } }) => {

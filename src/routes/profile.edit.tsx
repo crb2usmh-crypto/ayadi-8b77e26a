@@ -20,7 +20,7 @@ import { PageTransition } from "@/components/layout/PageTransition";
 import { usePiAuth } from "@/components/providers/PiAuthProvider";
 import { profileQueryOptions } from "@/lib/supabase/queries";
 import { resolveAvatar } from "@/lib/supabase/types";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClientNew";
 import { compressImage } from "@/lib/image-compress";
 import { COUNTRIES } from "@/lib/data/countries";
 
