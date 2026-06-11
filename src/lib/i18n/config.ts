@@ -24,18 +24,10 @@ if (!i18n.isInitialized) {
     });
 }
 
-// After hydration on the client, switch to the user's preferred language.
-if (typeof window !== "undefined") {
-  try {
-    const stored = window.localStorage.getItem("ayadi-lang");
-    if (stored && stored !== i18n.language && (stored === "ar" || stored === "en")) {
-      // Defer so initial render matches SSR; then change.
-      queueMicrotask(() => i18n.changeLanguage(stored));
-    }
-  } catch {
-    // ignore
-  }
-}
+// NOTE: do NOT switch to a stored language at module load — even via
+// queueMicrotask it can run before React hydrates and cause a
+// hydration mismatch (server rendered "ar", client suddenly "en").
+// The language switch happens inside an `useEffect` in <AppShell />.
 
 export default i18n;
 
