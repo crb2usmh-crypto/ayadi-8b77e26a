@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { profileQueryOptions } from "@/lib/supabase/queries";
 import { usePiAuth } from "@/components/providers/PiAuthProvider";
 import { getCountryName } from "@/lib/data/countries";
+import { pingSupabase } from "@/lib/supabaseClientNew";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -44,6 +45,12 @@ function HomePage() {
   const [activeCategory, setActiveCategory] = useState<TaskCategory | "all">("all");
   const [showAllCountries, setShowAllCountries] = useState(false);
   const { data: tasks = [], isLoading, error } = useQuery(tasksQueryOptions());
+  const ping = useQuery({
+    queryKey: ["supabase-ping"],
+    queryFn: pingSupabase,
+    staleTime: 60_000,
+    retry: 0,
+  });
 
   const countryFilter = !showAllCountries && userCountry ? userCountry : null;
   const filtered = filterTasks(tasks, query, activeCategory, countryFilter);
@@ -52,6 +59,20 @@ function HomePage() {
   return (
     <PageTransition>
       <div className="mx-auto max-w-7xl px-4 py-8 md:px-8 md:py-12 md:ps-24">
+        {/* Temporary Supabase connection diagnostic */}
+        <div
+          className={cn(
+            "mb-4 rounded-xl px-4 py-2 text-sm font-medium",
+            ping.isLoading && "bg-muted text-muted-foreground",
+            ping.isError && "bg-destructive/10 text-destructive",
+            ping.isSuccess && "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+          )}
+        >
+          {ping.isLoading && "… يجري اختبار الاتصال بـ Supabase"}
+          {ping.isError && `✗ فشل الاتصال: ${ping.error instanceof Error ? ping.error.message : String(ping.error)}`}
+          {ping.isSuccess && `✓ Supabase متصل — عدد المهام: ${ping.data}`}
+        </div>
+
         {/* HERO */}
         <section className="relative">
           <motion.div
