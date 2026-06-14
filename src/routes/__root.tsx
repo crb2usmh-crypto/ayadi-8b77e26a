@@ -134,10 +134,28 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 });
 
 function RootShell({ children }: { children: React.ReactNode }) {
+  // Inject Supabase config into the client at SSR time. This lets the published
+  // worker pass non-prefixed SUPABASE_URL / SUPABASE_ANON_KEY (which are NOT
+  // inlined into the client bundle at build time) through to the browser.
+  const supabaseUrl =
+    (typeof process !== "undefined" &&
+      (process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL)) ||
+    "";
+  const supabaseAnon =
+    (typeof process !== "undefined" &&
+      (process.env.VITE_SUPABASE_ANON_KEY ??
+        process.env.SUPABASE_ANON_KEY ??
+        process.env.SUPABASE_PUBLISHABLE_KEY)) ||
+    "";
+  const configScript = `window.__SUPABASE_CONFIG__=${JSON.stringify({
+    url: supabaseUrl,
+    anon: supabaseAnon,
+  })};`;
   return (
     <html lang="ar" dir="rtl">
       <head>
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: configScript }} />
       </head>
       <body>
         {children}
