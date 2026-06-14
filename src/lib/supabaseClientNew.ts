@@ -5,6 +5,17 @@ function resolveEnv(): { url: string; anon: string } {
   let url = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "";
   let anon = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ?? "";
 
+  // Browser runtime fallback: SSR-injected config on window.
+  if ((!url || !anon) && typeof window !== "undefined") {
+    const cfg = (window as unknown as {
+      __SUPABASE_CONFIG__?: { url?: string; anon?: string };
+    }).__SUPABASE_CONFIG__;
+    if (cfg) {
+      url = url || cfg.url || "";
+      anon = anon || cfg.anon || "";
+    }
+  }
+
   // Server (Worker) runtime: fall back to process.env so SSR works even if
   // the publish-time build didn't inline the values.
   if ((!url || !anon) && typeof process !== "undefined" && process.env) {
