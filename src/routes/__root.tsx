@@ -9,14 +9,9 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import appCss from "../styles.css?url";
-import "@fontsource/outfit/400.css";
-import "@fontsource/outfit/600.css";
-import "@fontsource/outfit/700.css";
-import "@fontsource/figtree/400.css";
-import "@fontsource/figtree/500.css";
-import "@fontsource/figtree/600.css";
+// Arabic-first app — load only Tajawal (the RTL font used in styles.css).
+// Latin fonts (Outfit/Figtree) fall back to system fonts to keep the bundle light.
 import "@fontsource/tajawal/400.css";
-import "@fontsource/tajawal/500.css";
 import "@fontsource/tajawal/700.css";
 
 import "@/lib/i18n/config";
