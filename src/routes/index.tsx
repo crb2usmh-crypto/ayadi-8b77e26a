@@ -30,7 +30,8 @@ export const Route = createFileRoute("/")({
     ],
   }),
   loader: ({ context: { queryClient } }) => {
-    queryClient.ensureQueryData(tasksQueryOptions());
+    // Prefetch but never throw — a Supabase failure on SSR must not 500 the page.
+    queryClient.ensureQueryData(tasksQueryOptions()).catch(() => undefined);
   },
   component: HomePage,
 });
