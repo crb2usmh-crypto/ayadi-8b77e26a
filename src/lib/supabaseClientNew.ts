@@ -1,23 +1,52 @@
 import { createClient } from "@supabase/supabase-js";
 
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+function resolveEnv(): { url: string; anon: string } {
+  // Browser / client bundle: Vite inlines import.meta.env at build time.
+  let url = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "";
+  let anon = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ?? "";
 
-if (!url || !anon) {
-  // Visible diagnostic — never logs the values themselves.
-  console.error(
-    "[supabase] Missing env vars — url present:",
-    Boolean(url),
-    "anon present:",
-    Boolean(anon),
-  );
+  // Server (Worker) runtime: fall back to process.env so SSR works even if
+  // the publish-time build didn't inline the values.
+  if ((!url || !anon) && typeof process !== "undefined" && process.env) {
+    url = url || (process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL ?? "");
+    anon =
+      anon ||
+      (process.env.VITE_SUPABASE_ANON_KEY ??
+        process.env.SUPABASE_ANON_KEY ??
+        process.env.SUPABASE_PUBLISHABLE_KEY ??
+        "");
+  }
+  return { url, anon };
 }
 
-export const supabase = createClient(url ?? "", anon ?? "", {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-    detectSessionInUrl: false,
+// Lazy proxy: don't crash at module load when env vars are missing.
+// `createClient("")` throws synchronously, which would break the whole
+// SSR Worker entry (every route 500s) — we want a real error only when
+// a query actually runs.
+let _client: ReturnType<typeof createClient> | null = null;
+function getClient() {
+  if (_client) return _client;
+  const { url, anon } = resolveEnv();
+  if (!url || !anon) {
+    throw new Error(
+      "Supabase env vars missing (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY).",
+    );
+  }
+  _client = createClient(url, anon, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
+  return _client;
+}
+
+export const supabase = new Proxy({} as ReturnType<typeof createClient>, {
+  get(_target, prop) {
+    const c = getClient() as unknown as Record<string | symbol, unknown>;
+    const value = c[prop];
+    return typeof value === "function" ? (value as Function).bind(c) : value;
   },
 });
 
