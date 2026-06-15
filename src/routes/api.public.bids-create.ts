@@ -6,7 +6,7 @@ import {
   ensureProfile,
 } from "@/lib/server/piVerify.server";
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const TASK_ID_RE = /^[0-9a-f-]{1,40}$/i;
 
 function withDetails(
   payload: { error: string },
@@ -29,8 +29,13 @@ export const Route = createFileRoute("/api/public/bids-create")({
           return Response.json({ error: "Invalid JSON body" }, { status: 400 });
         }
 
-        const taskId = typeof body.taskId === "string" ? body.taskId.trim() : "";
-        if (!taskId || !UUID_RE.test(taskId)) {
+        const taskId =
+          typeof body.taskId === "string"
+            ? body.taskId.trim()
+            : typeof body.taskId === "number"
+              ? String(body.taskId)
+              : "";
+        if (!taskId || !TASK_ID_RE.test(taskId)) {
           return Response.json({ error: "معرف المهمة غير صالح" }, { status: 400 });
         }
 
