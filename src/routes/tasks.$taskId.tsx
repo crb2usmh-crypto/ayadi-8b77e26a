@@ -41,7 +41,6 @@ import { ReviewForm } from "@/components/common/ReviewForm";
 import { ReviewsList } from "@/components/common/ReviewsList";
 import { supabase } from "@/lib/supabaseClientNew";
 import { useMaybeShowAd } from "@/lib/ads";
-import { useEffect } from "react";
 
 export const Route = createFileRoute("/tasks/$taskId")({
   loader: async ({ params, context: { queryClient } }) => {
