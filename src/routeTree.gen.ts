@@ -26,6 +26,7 @@ import { Route as ApiPublicTasksUpdateRouteImport } from './routes/api.public.ta
 import { Route as ApiPublicTasksDeleteRouteImport } from './routes/api.public.tasks-delete'
 import { Route as ApiPublicTasksCreateRouteImport } from './routes/api.public.tasks-create'
 import { Route as ApiPublicTasksCompleteRouteImport } from './routes/api.public.tasks-complete'
+import { Route as ApiPublicTaskBoostRouteImport } from './routes/api.public.task-boost'
 import { Route as ApiPublicReviewsListRouteImport } from './routes/api.public.reviews-list'
 import { Route as ApiPublicReviewsForTaskRouteImport } from './routes/api.public.reviews-for-task'
 import { Route as ApiPublicReviewsCreateRouteImport } from './routes/api.public.reviews-create'
@@ -127,6 +128,11 @@ const ApiPublicTasksCreateRoute = ApiPublicTasksCreateRouteImport.update({
 const ApiPublicTasksCompleteRoute = ApiPublicTasksCompleteRouteImport.update({
   id: '/api/public/tasks-complete',
   path: '/api/public/tasks-complete',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicTaskBoostRoute = ApiPublicTaskBoostRouteImport.update({
+  id: '/api/public/task-boost',
+  path: '/api/public/task-boost',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicReviewsListRoute = ApiPublicReviewsListRouteImport.update({
@@ -246,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/api/public/reviews-create': typeof ApiPublicReviewsCreateRoute
   '/api/public/reviews-for-task': typeof ApiPublicReviewsForTaskRoute
   '/api/public/reviews-list': typeof ApiPublicReviewsListRoute
+  '/api/public/task-boost': typeof ApiPublicTaskBoostRoute
   '/api/public/tasks-complete': typeof ApiPublicTasksCompleteRoute
   '/api/public/tasks-create': typeof ApiPublicTasksCreateRoute
   '/api/public/tasks-delete': typeof ApiPublicTasksDeleteRoute
@@ -281,6 +288,7 @@ export interface FileRoutesByTo {
   '/api/public/reviews-create': typeof ApiPublicReviewsCreateRoute
   '/api/public/reviews-for-task': typeof ApiPublicReviewsForTaskRoute
   '/api/public/reviews-list': typeof ApiPublicReviewsListRoute
+  '/api/public/task-boost': typeof ApiPublicTaskBoostRoute
   '/api/public/tasks-complete': typeof ApiPublicTasksCompleteRoute
   '/api/public/tasks-create': typeof ApiPublicTasksCreateRoute
   '/api/public/tasks-delete': typeof ApiPublicTasksDeleteRoute
@@ -318,6 +326,7 @@ export interface FileRoutesById {
   '/api/public/reviews-create': typeof ApiPublicReviewsCreateRoute
   '/api/public/reviews-for-task': typeof ApiPublicReviewsForTaskRoute
   '/api/public/reviews-list': typeof ApiPublicReviewsListRoute
+  '/api/public/task-boost': typeof ApiPublicTaskBoostRoute
   '/api/public/tasks-complete': typeof ApiPublicTasksCompleteRoute
   '/api/public/tasks-create': typeof ApiPublicTasksCreateRoute
   '/api/public/tasks-delete': typeof ApiPublicTasksDeleteRoute
@@ -356,6 +365,7 @@ export interface FileRouteTypes {
     | '/api/public/reviews-create'
     | '/api/public/reviews-for-task'
     | '/api/public/reviews-list'
+    | '/api/public/task-boost'
     | '/api/public/tasks-complete'
     | '/api/public/tasks-create'
     | '/api/public/tasks-delete'
@@ -391,6 +401,7 @@ export interface FileRouteTypes {
     | '/api/public/reviews-create'
     | '/api/public/reviews-for-task'
     | '/api/public/reviews-list'
+    | '/api/public/task-boost'
     | '/api/public/tasks-complete'
     | '/api/public/tasks-create'
     | '/api/public/tasks-delete'
@@ -427,6 +438,7 @@ export interface FileRouteTypes {
     | '/api/public/reviews-create'
     | '/api/public/reviews-for-task'
     | '/api/public/reviews-list'
+    | '/api/public/task-boost'
     | '/api/public/tasks-complete'
     | '/api/public/tasks-create'
     | '/api/public/tasks-delete'
@@ -461,6 +473,7 @@ export interface RootRouteChildren {
   ApiPublicReviewsCreateRoute: typeof ApiPublicReviewsCreateRoute
   ApiPublicReviewsForTaskRoute: typeof ApiPublicReviewsForTaskRoute
   ApiPublicReviewsListRoute: typeof ApiPublicReviewsListRoute
+  ApiPublicTaskBoostRoute: typeof ApiPublicTaskBoostRoute
   ApiPublicTasksCompleteRoute: typeof ApiPublicTasksCompleteRoute
   ApiPublicTasksCreateRoute: typeof ApiPublicTasksCreateRoute
   ApiPublicTasksDeleteRoute: typeof ApiPublicTasksDeleteRoute
@@ -587,6 +600,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/tasks-complete'
       fullPath: '/api/public/tasks-complete'
       preLoaderRoute: typeof ApiPublicTasksCompleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/task-boost': {
+      id: '/api/public/task-boost'
+      path: '/api/public/task-boost'
+      fullPath: '/api/public/task-boost'
+      preLoaderRoute: typeof ApiPublicTaskBoostRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/reviews-list': {
@@ -774,6 +794,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicReviewsCreateRoute: ApiPublicReviewsCreateRoute,
   ApiPublicReviewsForTaskRoute: ApiPublicReviewsForTaskRoute,
   ApiPublicReviewsListRoute: ApiPublicReviewsListRoute,
+  ApiPublicTaskBoostRoute: ApiPublicTaskBoostRoute,
   ApiPublicTasksCompleteRoute: ApiPublicTasksCompleteRoute,
   ApiPublicTasksCreateRoute: ApiPublicTasksCreateRoute,
   ApiPublicTasksDeleteRoute: ApiPublicTasksDeleteRoute,
