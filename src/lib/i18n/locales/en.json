@@ -226,5 +226,17 @@
     "uploadAvatar": "Change avatar",
     "avatarUploaded": "Avatar updated ✅",
     "avatarUploadFailed": "Could not upload avatar"
+  },
+  "adFree": {
+    "title": "Disable ads",
+    "subtitle": "Subscribe for {{price}} Pi to disable ads for 30 days",
+    "subscribeButton": "Subscribe — {{price}} Pi",
+    "activeUntil": "Active until {{date}} ✓",
+    "success": "🎉 Ad-Free enabled for 30 days"
+  },
+  "boost": {
+    "button": "Boost ({{cost}} AYADI)",
+    "active": "Boosted to the top ⬆",
+    "success": "🚀 Task boosted to top for 24h"
   }
 }
