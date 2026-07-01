@@ -31,6 +31,7 @@ import { Route as ApiPublicReviewsForTaskRouteImport } from './routes/api.public
 import { Route as ApiPublicReviewsCreateRouteImport } from './routes/api.public.reviews-create'
 import { Route as ApiPublicProfileUpdateRouteImport } from './routes/api.public.profile-update'
 import { Route as ApiPublicPiVerifyRouteImport } from './routes/api.public.pi-verify'
+import { Route as ApiPublicPaymentApproveRouteImport } from './routes/api.public.payment-approve'
 import { Route as ApiPublicNotificationsRouteImport } from './routes/api.public.notifications'
 import { Route as ApiPublicMessagesSendRouteImport } from './routes/api.public.messages-send'
 import { Route as ApiPublicMessagesListRouteImport } from './routes/api.public.messages-list'
@@ -152,6 +153,11 @@ const ApiPublicPiVerifyRoute = ApiPublicPiVerifyRouteImport.update({
   path: '/api/public/pi-verify',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPaymentApproveRoute = ApiPublicPaymentApproveRouteImport.update({
+  id: '/api/public/payment-approve',
+  path: '/api/public/payment-approve',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicNotificationsRoute = ApiPublicNotificationsRouteImport.update({
   id: '/api/public/notifications',
   path: '/api/public/notifications',
@@ -226,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/api/public/messages-list': typeof ApiPublicMessagesListRoute
   '/api/public/messages-send': typeof ApiPublicMessagesSendRoute
   '/api/public/notifications': typeof ApiPublicNotificationsRoute
+  '/api/public/payment-approve': typeof ApiPublicPaymentApproveRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
   '/api/public/profile-update': typeof ApiPublicProfileUpdateRoute
   '/api/public/reviews-create': typeof ApiPublicReviewsCreateRoute
@@ -259,6 +266,7 @@ export interface FileRoutesByTo {
   '/api/public/messages-list': typeof ApiPublicMessagesListRoute
   '/api/public/messages-send': typeof ApiPublicMessagesSendRoute
   '/api/public/notifications': typeof ApiPublicNotificationsRoute
+  '/api/public/payment-approve': typeof ApiPublicPaymentApproveRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
   '/api/public/profile-update': typeof ApiPublicProfileUpdateRoute
   '/api/public/reviews-create': typeof ApiPublicReviewsCreateRoute
@@ -294,6 +302,7 @@ export interface FileRoutesById {
   '/api/public/messages-list': typeof ApiPublicMessagesListRoute
   '/api/public/messages-send': typeof ApiPublicMessagesSendRoute
   '/api/public/notifications': typeof ApiPublicNotificationsRoute
+  '/api/public/payment-approve': typeof ApiPublicPaymentApproveRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
   '/api/public/profile-update': typeof ApiPublicProfileUpdateRoute
   '/api/public/reviews-create': typeof ApiPublicReviewsCreateRoute
@@ -330,6 +339,7 @@ export interface FileRouteTypes {
     | '/api/public/messages-list'
     | '/api/public/messages-send'
     | '/api/public/notifications'
+    | '/api/public/payment-approve'
     | '/api/public/pi-verify'
     | '/api/public/profile-update'
     | '/api/public/reviews-create'
@@ -363,6 +373,7 @@ export interface FileRouteTypes {
     | '/api/public/messages-list'
     | '/api/public/messages-send'
     | '/api/public/notifications'
+    | '/api/public/payment-approve'
     | '/api/public/pi-verify'
     | '/api/public/profile-update'
     | '/api/public/reviews-create'
@@ -397,6 +408,7 @@ export interface FileRouteTypes {
     | '/api/public/messages-list'
     | '/api/public/messages-send'
     | '/api/public/notifications'
+    | '/api/public/payment-approve'
     | '/api/public/pi-verify'
     | '/api/public/profile-update'
     | '/api/public/reviews-create'
@@ -429,6 +441,7 @@ export interface RootRouteChildren {
   ApiPublicMessagesListRoute: typeof ApiPublicMessagesListRoute
   ApiPublicMessagesSendRoute: typeof ApiPublicMessagesSendRoute
   ApiPublicNotificationsRoute: typeof ApiPublicNotificationsRoute
+  ApiPublicPaymentApproveRoute: typeof ApiPublicPaymentApproveRoute
   ApiPublicPiVerifyRoute: typeof ApiPublicPiVerifyRoute
   ApiPublicProfileUpdateRoute: typeof ApiPublicProfileUpdateRoute
   ApiPublicReviewsCreateRoute: typeof ApiPublicReviewsCreateRoute
@@ -597,6 +610,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPiVerifyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/payment-approve': {
+      id: '/api/public/payment-approve'
+      path: '/api/public/payment-approve'
+      fullPath: '/api/public/payment-approve'
+      preLoaderRoute: typeof ApiPublicPaymentApproveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/notifications': {
       id: '/api/public/notifications'
       path: '/api/public/notifications'
@@ -726,6 +746,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMessagesListRoute: ApiPublicMessagesListRoute,
   ApiPublicMessagesSendRoute: ApiPublicMessagesSendRoute,
   ApiPublicNotificationsRoute: ApiPublicNotificationsRoute,
+  ApiPublicPaymentApproveRoute: ApiPublicPaymentApproveRoute,
   ApiPublicPiVerifyRoute: ApiPublicPiVerifyRoute,
   ApiPublicProfileUpdateRoute: ApiPublicProfileUpdateRoute,
   ApiPublicReviewsCreateRoute: ApiPublicReviewsCreateRoute,
