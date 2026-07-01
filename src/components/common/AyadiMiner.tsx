@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { usePiAuth } from "@/components/providers/PiAuthProvider";
 import { cn } from "@/lib/utils";
+import { useMaybeShowAd } from "@/lib/ads";
 import ayadiTokenImg from "@/assets/ayadi-token.png";
 
 interface ClaimEntry {
@@ -71,6 +72,7 @@ export function AyadiMiner() {
   const { session } = usePiAuth();
   const queryClient = useQueryClient();
   const accessToken = session?.accessToken ?? null;
+  const maybeShowAd = useMaybeShowAd();
 
   const { data, isLoading } = useQuery({
     queryKey: ["ayadi-balance", accessToken ? "auth" : "anon"],
@@ -99,7 +101,11 @@ export function AyadiMiner() {
   }, [data, queryClient]);
 
   const mineMutation = useMutation({
-    mutationFn: () => mine(accessToken!),
+    mutationFn: async () => {
+      // Show a rewarded ad before mining (skipped if user is ad-free).
+      await maybeShowAd("rewarded");
+      return mine(accessToken!);
+    },
     onSuccess: (res) => {
       if (res.claimed) {
         toast.success(
