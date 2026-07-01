@@ -40,6 +40,7 @@ import { Route as ApiPublicBidsCreateRouteImport } from './routes/api.public.bid
 import { Route as ApiPublicBidsAcceptRouteImport } from './routes/api.public.bids-accept'
 import { Route as ApiPublicAyadiMineRouteImport } from './routes/api.public.ayadi-mine'
 import { Route as ApiPublicAyadiBalanceRouteImport } from './routes/api.public.ayadi-balance'
+import { Route as ApiPublicAdsStatusRouteImport } from './routes/api.public.ads-status'
 
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
@@ -197,6 +198,11 @@ const ApiPublicAyadiBalanceRoute = ApiPublicAyadiBalanceRouteImport.update({
   path: '/api/public/ayadi-balance',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAdsStatusRoute = ApiPublicAdsStatusRouteImport.update({
+  id: '/api/public/ads-status',
+  path: '/api/public/ads-status',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -210,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/messages/': typeof MessagesIndexRoute
   '/tasks/': typeof TasksIndexRoute
+  '/api/public/ads-status': typeof ApiPublicAdsStatusRoute
   '/api/public/ayadi-balance': typeof ApiPublicAyadiBalanceRoute
   '/api/public/ayadi-mine': typeof ApiPublicAyadiMineRoute
   '/api/public/bids-accept': typeof ApiPublicBidsAcceptRoute
@@ -242,6 +249,7 @@ export interface FileRoutesByTo {
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/messages': typeof MessagesIndexRoute
   '/tasks': typeof TasksIndexRoute
+  '/api/public/ads-status': typeof ApiPublicAdsStatusRoute
   '/api/public/ayadi-balance': typeof ApiPublicAyadiBalanceRoute
   '/api/public/ayadi-mine': typeof ApiPublicAyadiMineRoute
   '/api/public/bids-accept': typeof ApiPublicBidsAcceptRoute
@@ -276,6 +284,7 @@ export interface FileRoutesById {
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/messages/': typeof MessagesIndexRoute
   '/tasks/': typeof TasksIndexRoute
+  '/api/public/ads-status': typeof ApiPublicAdsStatusRoute
   '/api/public/ayadi-balance': typeof ApiPublicAyadiBalanceRoute
   '/api/public/ayadi-mine': typeof ApiPublicAyadiMineRoute
   '/api/public/bids-accept': typeof ApiPublicBidsAcceptRoute
@@ -311,6 +320,7 @@ export interface FileRouteTypes {
     | '/tasks/$taskId'
     | '/messages/'
     | '/tasks/'
+    | '/api/public/ads-status'
     | '/api/public/ayadi-balance'
     | '/api/public/ayadi-mine'
     | '/api/public/bids-accept'
@@ -343,6 +353,7 @@ export interface FileRouteTypes {
     | '/tasks/$taskId'
     | '/messages'
     | '/tasks'
+    | '/api/public/ads-status'
     | '/api/public/ayadi-balance'
     | '/api/public/ayadi-mine'
     | '/api/public/bids-accept'
@@ -376,6 +387,7 @@ export interface FileRouteTypes {
     | '/tasks/$taskId'
     | '/messages/'
     | '/tasks/'
+    | '/api/public/ads-status'
     | '/api/public/ayadi-balance'
     | '/api/public/ayadi-mine'
     | '/api/public/bids-accept'
@@ -407,6 +419,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRouteWithChildren
   TasksTaskIdRoute: typeof TasksTaskIdRouteWithChildren
   TasksIndexRoute: typeof TasksIndexRoute
+  ApiPublicAdsStatusRoute: typeof ApiPublicAdsStatusRoute
   ApiPublicAyadiBalanceRoute: typeof ApiPublicAyadiBalanceRoute
   ApiPublicAyadiMineRoute: typeof ApiPublicAyadiMineRoute
   ApiPublicBidsAcceptRoute: typeof ApiPublicBidsAcceptRoute
@@ -647,6 +660,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAyadiBalanceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/ads-status': {
+      id: '/api/public/ads-status'
+      path: '/api/public/ads-status'
+      fullPath: '/api/public/ads-status'
+      preLoaderRoute: typeof ApiPublicAdsStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -696,6 +716,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRouteWithChildren,
   TasksTaskIdRoute: TasksTaskIdRouteWithChildren,
   TasksIndexRoute: TasksIndexRoute,
+  ApiPublicAdsStatusRoute: ApiPublicAdsStatusRoute,
   ApiPublicAyadiBalanceRoute: ApiPublicAyadiBalanceRoute,
   ApiPublicAyadiMineRoute: ApiPublicAyadiMineRoute,
   ApiPublicBidsAcceptRoute: ApiPublicBidsAcceptRoute,
