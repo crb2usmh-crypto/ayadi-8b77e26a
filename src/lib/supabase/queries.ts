@@ -19,6 +19,7 @@ async function fetchTasks(): Promise<TaskWithOwner[]> {
   const { data: tasks, error } = await supabase
     .from("tasks")
     .select("*")
+    .order("boosted_until", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message);
