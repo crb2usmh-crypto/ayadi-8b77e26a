@@ -226,5 +226,17 @@
     "uploadAvatar": "تغيير الصورة الرمزية",
     "avatarUploaded": "تم تحديث الصورة ✅",
     "avatarUploadFailed": "تعذّر رفع الصورة"
+  },
+  "adFree": {
+    "title": "تعطيل الإعلانات",
+    "subtitle": "اشترك بـ {{price}} Pi لتعطيل الإعلانات لمدة 30 يومًا",
+    "subscribeButton": "اشتراك — {{price}} Pi",
+    "activeUntil": "مفعّل حتى {{date}} ✓",
+    "success": "🎉 تم تفعيل الاشتراك بدون إعلانات لمدة 30 يومًا"
+  },
+  "boost": {
+    "button": "ترقية ({{cost}} AYADI)",
+    "active": "مروَّجة إلى القمة ⬆",
+    "success": "🚀 تم رفع المهمة إلى الأعلى لـ 24 ساعة"
   }
 }
