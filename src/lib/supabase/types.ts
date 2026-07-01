@@ -66,6 +66,8 @@ export interface TaskRow {
   assignee_pi_uid: string | null;
   /** ISO-2 country code of the task owner at posting time. */
   country: string | null;
+  /** Timestamp until which the task is boosted to the top (AYADI token). */
+  boosted_until: string | null;
 }
 
 /** Task joined with its owner profile (returned by list/detail queries). */
