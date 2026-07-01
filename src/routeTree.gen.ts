@@ -26,11 +26,14 @@ import { Route as ApiPublicTasksUpdateRouteImport } from './routes/api.public.ta
 import { Route as ApiPublicTasksDeleteRouteImport } from './routes/api.public.tasks-delete'
 import { Route as ApiPublicTasksCreateRouteImport } from './routes/api.public.tasks-create'
 import { Route as ApiPublicTasksCompleteRouteImport } from './routes/api.public.tasks-complete'
+import { Route as ApiPublicTaskBoostRouteImport } from './routes/api.public.task-boost'
 import { Route as ApiPublicReviewsListRouteImport } from './routes/api.public.reviews-list'
 import { Route as ApiPublicReviewsForTaskRouteImport } from './routes/api.public.reviews-for-task'
 import { Route as ApiPublicReviewsCreateRouteImport } from './routes/api.public.reviews-create'
 import { Route as ApiPublicProfileUpdateRouteImport } from './routes/api.public.profile-update'
 import { Route as ApiPublicPiVerifyRouteImport } from './routes/api.public.pi-verify'
+import { Route as ApiPublicPaymentCompleteRouteImport } from './routes/api.public.payment-complete'
+import { Route as ApiPublicPaymentApproveRouteImport } from './routes/api.public.payment-approve'
 import { Route as ApiPublicNotificationsRouteImport } from './routes/api.public.notifications'
 import { Route as ApiPublicMessagesSendRouteImport } from './routes/api.public.messages-send'
 import { Route as ApiPublicMessagesListRouteImport } from './routes/api.public.messages-list'
@@ -40,6 +43,7 @@ import { Route as ApiPublicBidsCreateRouteImport } from './routes/api.public.bid
 import { Route as ApiPublicBidsAcceptRouteImport } from './routes/api.public.bids-accept'
 import { Route as ApiPublicAyadiMineRouteImport } from './routes/api.public.ayadi-mine'
 import { Route as ApiPublicAyadiBalanceRouteImport } from './routes/api.public.ayadi-balance'
+import { Route as ApiPublicAdsStatusRouteImport } from './routes/api.public.ads-status'
 
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
@@ -126,6 +130,11 @@ const ApiPublicTasksCompleteRoute = ApiPublicTasksCompleteRouteImport.update({
   path: '/api/public/tasks-complete',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTaskBoostRoute = ApiPublicTaskBoostRouteImport.update({
+  id: '/api/public/task-boost',
+  path: '/api/public/task-boost',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicReviewsListRoute = ApiPublicReviewsListRouteImport.update({
   id: '/api/public/reviews-list',
   path: '/api/public/reviews-list',
@@ -149,6 +158,17 @@ const ApiPublicProfileUpdateRoute = ApiPublicProfileUpdateRouteImport.update({
 const ApiPublicPiVerifyRoute = ApiPublicPiVerifyRouteImport.update({
   id: '/api/public/pi-verify',
   path: '/api/public/pi-verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPaymentCompleteRoute =
+  ApiPublicPaymentCompleteRouteImport.update({
+    id: '/api/public/payment-complete',
+    path: '/api/public/payment-complete',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicPaymentApproveRoute = ApiPublicPaymentApproveRouteImport.update({
+  id: '/api/public/payment-approve',
+  path: '/api/public/payment-approve',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicNotificationsRoute = ApiPublicNotificationsRouteImport.update({
@@ -197,6 +217,11 @@ const ApiPublicAyadiBalanceRoute = ApiPublicAyadiBalanceRouteImport.update({
   path: '/api/public/ayadi-balance',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAdsStatusRoute = ApiPublicAdsStatusRouteImport.update({
+  id: '/api/public/ads-status',
+  path: '/api/public/ads-status',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -210,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/messages/': typeof MessagesIndexRoute
   '/tasks/': typeof TasksIndexRoute
+  '/api/public/ads-status': typeof ApiPublicAdsStatusRoute
   '/api/public/ayadi-balance': typeof ApiPublicAyadiBalanceRoute
   '/api/public/ayadi-mine': typeof ApiPublicAyadiMineRoute
   '/api/public/bids-accept': typeof ApiPublicBidsAcceptRoute
@@ -219,11 +245,14 @@ export interface FileRoutesByFullPath {
   '/api/public/messages-list': typeof ApiPublicMessagesListRoute
   '/api/public/messages-send': typeof ApiPublicMessagesSendRoute
   '/api/public/notifications': typeof ApiPublicNotificationsRoute
+  '/api/public/payment-approve': typeof ApiPublicPaymentApproveRoute
+  '/api/public/payment-complete': typeof ApiPublicPaymentCompleteRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
   '/api/public/profile-update': typeof ApiPublicProfileUpdateRoute
   '/api/public/reviews-create': typeof ApiPublicReviewsCreateRoute
   '/api/public/reviews-for-task': typeof ApiPublicReviewsForTaskRoute
   '/api/public/reviews-list': typeof ApiPublicReviewsListRoute
+  '/api/public/task-boost': typeof ApiPublicTaskBoostRoute
   '/api/public/tasks-complete': typeof ApiPublicTasksCompleteRoute
   '/api/public/tasks-create': typeof ApiPublicTasksCreateRoute
   '/api/public/tasks-delete': typeof ApiPublicTasksDeleteRoute
@@ -242,6 +271,7 @@ export interface FileRoutesByTo {
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/messages': typeof MessagesIndexRoute
   '/tasks': typeof TasksIndexRoute
+  '/api/public/ads-status': typeof ApiPublicAdsStatusRoute
   '/api/public/ayadi-balance': typeof ApiPublicAyadiBalanceRoute
   '/api/public/ayadi-mine': typeof ApiPublicAyadiMineRoute
   '/api/public/bids-accept': typeof ApiPublicBidsAcceptRoute
@@ -251,11 +281,14 @@ export interface FileRoutesByTo {
   '/api/public/messages-list': typeof ApiPublicMessagesListRoute
   '/api/public/messages-send': typeof ApiPublicMessagesSendRoute
   '/api/public/notifications': typeof ApiPublicNotificationsRoute
+  '/api/public/payment-approve': typeof ApiPublicPaymentApproveRoute
+  '/api/public/payment-complete': typeof ApiPublicPaymentCompleteRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
   '/api/public/profile-update': typeof ApiPublicProfileUpdateRoute
   '/api/public/reviews-create': typeof ApiPublicReviewsCreateRoute
   '/api/public/reviews-for-task': typeof ApiPublicReviewsForTaskRoute
   '/api/public/reviews-list': typeof ApiPublicReviewsListRoute
+  '/api/public/task-boost': typeof ApiPublicTaskBoostRoute
   '/api/public/tasks-complete': typeof ApiPublicTasksCompleteRoute
   '/api/public/tasks-create': typeof ApiPublicTasksCreateRoute
   '/api/public/tasks-delete': typeof ApiPublicTasksDeleteRoute
@@ -276,6 +309,7 @@ export interface FileRoutesById {
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/messages/': typeof MessagesIndexRoute
   '/tasks/': typeof TasksIndexRoute
+  '/api/public/ads-status': typeof ApiPublicAdsStatusRoute
   '/api/public/ayadi-balance': typeof ApiPublicAyadiBalanceRoute
   '/api/public/ayadi-mine': typeof ApiPublicAyadiMineRoute
   '/api/public/bids-accept': typeof ApiPublicBidsAcceptRoute
@@ -285,11 +319,14 @@ export interface FileRoutesById {
   '/api/public/messages-list': typeof ApiPublicMessagesListRoute
   '/api/public/messages-send': typeof ApiPublicMessagesSendRoute
   '/api/public/notifications': typeof ApiPublicNotificationsRoute
+  '/api/public/payment-approve': typeof ApiPublicPaymentApproveRoute
+  '/api/public/payment-complete': typeof ApiPublicPaymentCompleteRoute
   '/api/public/pi-verify': typeof ApiPublicPiVerifyRoute
   '/api/public/profile-update': typeof ApiPublicProfileUpdateRoute
   '/api/public/reviews-create': typeof ApiPublicReviewsCreateRoute
   '/api/public/reviews-for-task': typeof ApiPublicReviewsForTaskRoute
   '/api/public/reviews-list': typeof ApiPublicReviewsListRoute
+  '/api/public/task-boost': typeof ApiPublicTaskBoostRoute
   '/api/public/tasks-complete': typeof ApiPublicTasksCompleteRoute
   '/api/public/tasks-create': typeof ApiPublicTasksCreateRoute
   '/api/public/tasks-delete': typeof ApiPublicTasksDeleteRoute
@@ -311,6 +348,7 @@ export interface FileRouteTypes {
     | '/tasks/$taskId'
     | '/messages/'
     | '/tasks/'
+    | '/api/public/ads-status'
     | '/api/public/ayadi-balance'
     | '/api/public/ayadi-mine'
     | '/api/public/bids-accept'
@@ -320,11 +358,14 @@ export interface FileRouteTypes {
     | '/api/public/messages-list'
     | '/api/public/messages-send'
     | '/api/public/notifications'
+    | '/api/public/payment-approve'
+    | '/api/public/payment-complete'
     | '/api/public/pi-verify'
     | '/api/public/profile-update'
     | '/api/public/reviews-create'
     | '/api/public/reviews-for-task'
     | '/api/public/reviews-list'
+    | '/api/public/task-boost'
     | '/api/public/tasks-complete'
     | '/api/public/tasks-create'
     | '/api/public/tasks-delete'
@@ -343,6 +384,7 @@ export interface FileRouteTypes {
     | '/tasks/$taskId'
     | '/messages'
     | '/tasks'
+    | '/api/public/ads-status'
     | '/api/public/ayadi-balance'
     | '/api/public/ayadi-mine'
     | '/api/public/bids-accept'
@@ -352,11 +394,14 @@ export interface FileRouteTypes {
     | '/api/public/messages-list'
     | '/api/public/messages-send'
     | '/api/public/notifications'
+    | '/api/public/payment-approve'
+    | '/api/public/payment-complete'
     | '/api/public/pi-verify'
     | '/api/public/profile-update'
     | '/api/public/reviews-create'
     | '/api/public/reviews-for-task'
     | '/api/public/reviews-list'
+    | '/api/public/task-boost'
     | '/api/public/tasks-complete'
     | '/api/public/tasks-create'
     | '/api/public/tasks-delete'
@@ -376,6 +421,7 @@ export interface FileRouteTypes {
     | '/tasks/$taskId'
     | '/messages/'
     | '/tasks/'
+    | '/api/public/ads-status'
     | '/api/public/ayadi-balance'
     | '/api/public/ayadi-mine'
     | '/api/public/bids-accept'
@@ -385,11 +431,14 @@ export interface FileRouteTypes {
     | '/api/public/messages-list'
     | '/api/public/messages-send'
     | '/api/public/notifications'
+    | '/api/public/payment-approve'
+    | '/api/public/payment-complete'
     | '/api/public/pi-verify'
     | '/api/public/profile-update'
     | '/api/public/reviews-create'
     | '/api/public/reviews-for-task'
     | '/api/public/reviews-list'
+    | '/api/public/task-boost'
     | '/api/public/tasks-complete'
     | '/api/public/tasks-create'
     | '/api/public/tasks-delete'
@@ -407,6 +456,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRouteWithChildren
   TasksTaskIdRoute: typeof TasksTaskIdRouteWithChildren
   TasksIndexRoute: typeof TasksIndexRoute
+  ApiPublicAdsStatusRoute: typeof ApiPublicAdsStatusRoute
   ApiPublicAyadiBalanceRoute: typeof ApiPublicAyadiBalanceRoute
   ApiPublicAyadiMineRoute: typeof ApiPublicAyadiMineRoute
   ApiPublicBidsAcceptRoute: typeof ApiPublicBidsAcceptRoute
@@ -416,11 +466,14 @@ export interface RootRouteChildren {
   ApiPublicMessagesListRoute: typeof ApiPublicMessagesListRoute
   ApiPublicMessagesSendRoute: typeof ApiPublicMessagesSendRoute
   ApiPublicNotificationsRoute: typeof ApiPublicNotificationsRoute
+  ApiPublicPaymentApproveRoute: typeof ApiPublicPaymentApproveRoute
+  ApiPublicPaymentCompleteRoute: typeof ApiPublicPaymentCompleteRoute
   ApiPublicPiVerifyRoute: typeof ApiPublicPiVerifyRoute
   ApiPublicProfileUpdateRoute: typeof ApiPublicProfileUpdateRoute
   ApiPublicReviewsCreateRoute: typeof ApiPublicReviewsCreateRoute
   ApiPublicReviewsForTaskRoute: typeof ApiPublicReviewsForTaskRoute
   ApiPublicReviewsListRoute: typeof ApiPublicReviewsListRoute
+  ApiPublicTaskBoostRoute: typeof ApiPublicTaskBoostRoute
   ApiPublicTasksCompleteRoute: typeof ApiPublicTasksCompleteRoute
   ApiPublicTasksCreateRoute: typeof ApiPublicTasksCreateRoute
   ApiPublicTasksDeleteRoute: typeof ApiPublicTasksDeleteRoute
@@ -549,6 +602,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTasksCompleteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/task-boost': {
+      id: '/api/public/task-boost'
+      path: '/api/public/task-boost'
+      fullPath: '/api/public/task-boost'
+      preLoaderRoute: typeof ApiPublicTaskBoostRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/reviews-list': {
       id: '/api/public/reviews-list'
       path: '/api/public/reviews-list'
@@ -582,6 +642,20 @@ declare module '@tanstack/react-router' {
       path: '/api/public/pi-verify'
       fullPath: '/api/public/pi-verify'
       preLoaderRoute: typeof ApiPublicPiVerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/payment-complete': {
+      id: '/api/public/payment-complete'
+      path: '/api/public/payment-complete'
+      fullPath: '/api/public/payment-complete'
+      preLoaderRoute: typeof ApiPublicPaymentCompleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/payment-approve': {
+      id: '/api/public/payment-approve'
+      path: '/api/public/payment-approve'
+      fullPath: '/api/public/payment-approve'
+      preLoaderRoute: typeof ApiPublicPaymentApproveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/notifications': {
@@ -647,6 +721,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAyadiBalanceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/ads-status': {
+      id: '/api/public/ads-status'
+      path: '/api/public/ads-status'
+      fullPath: '/api/public/ads-status'
+      preLoaderRoute: typeof ApiPublicAdsStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -696,6 +777,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRouteWithChildren,
   TasksTaskIdRoute: TasksTaskIdRouteWithChildren,
   TasksIndexRoute: TasksIndexRoute,
+  ApiPublicAdsStatusRoute: ApiPublicAdsStatusRoute,
   ApiPublicAyadiBalanceRoute: ApiPublicAyadiBalanceRoute,
   ApiPublicAyadiMineRoute: ApiPublicAyadiMineRoute,
   ApiPublicBidsAcceptRoute: ApiPublicBidsAcceptRoute,
@@ -705,11 +787,14 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMessagesListRoute: ApiPublicMessagesListRoute,
   ApiPublicMessagesSendRoute: ApiPublicMessagesSendRoute,
   ApiPublicNotificationsRoute: ApiPublicNotificationsRoute,
+  ApiPublicPaymentApproveRoute: ApiPublicPaymentApproveRoute,
+  ApiPublicPaymentCompleteRoute: ApiPublicPaymentCompleteRoute,
   ApiPublicPiVerifyRoute: ApiPublicPiVerifyRoute,
   ApiPublicProfileUpdateRoute: ApiPublicProfileUpdateRoute,
   ApiPublicReviewsCreateRoute: ApiPublicReviewsCreateRoute,
   ApiPublicReviewsForTaskRoute: ApiPublicReviewsForTaskRoute,
   ApiPublicReviewsListRoute: ApiPublicReviewsListRoute,
+  ApiPublicTaskBoostRoute: ApiPublicTaskBoostRoute,
   ApiPublicTasksCompleteRoute: ApiPublicTasksCompleteRoute,
   ApiPublicTasksCreateRoute: ApiPublicTasksCreateRoute,
   ApiPublicTasksDeleteRoute: ApiPublicTasksDeleteRoute,
@@ -719,12 +804,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

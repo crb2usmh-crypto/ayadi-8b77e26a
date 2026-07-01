@@ -32,7 +32,11 @@ export function TaskCard({ task, index = 0 }: { task: TaskWithOwner; index?: num
         params={{ taskId: task.id }}
         className="group glass-card relative block overflow-hidden rounded-3xl transition-shadow hover:shadow-2xl"
       >
-        {task.featured && (
+        {task.boosted_until && new Date(task.boosted_until).getTime() > Date.now() ? (
+          <span className="absolute top-3 end-3 z-10 rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-bold text-white shadow-md">
+            🚀 {rtl ? "مروَّجة" : "Boosted"}
+          </span>
+        ) : task.featured && (
           <span className="absolute top-3 end-3 z-10 rounded-full gradient-brand px-2.5 py-1 text-[10px] font-bold text-white shadow-md">
             ⭐ {rtl ? "مميزة" : "Featured"}
           </span>

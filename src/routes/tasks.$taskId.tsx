@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { motion, useScroll, useTransform } from "framer-motion";
@@ -40,6 +40,7 @@ import { usePiAuth } from "@/components/providers/PiAuthProvider";
 import { ReviewForm } from "@/components/common/ReviewForm";
 import { ReviewsList } from "@/components/common/ReviewsList";
 import { supabase } from "@/lib/supabaseClientNew";
+import { useMaybeShowAd } from "@/lib/ads";
 
 export const Route = createFileRoute("/tasks/$taskId")({
   loader: async ({ params, context: { queryClient } }) => {
@@ -92,6 +93,16 @@ function TaskDetail() {
   const { scrollY } = useScroll();
   const heroY = useTransform(scrollY, [0, 400], [0, 80]);
   const heroScale = useTransform(scrollY, [0, 400], [1, 1.15]);
+  const maybeShowAd = useMaybeShowAd();
+
+  // Show an interstitial ad on first view of a task (once per session per task).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const key = `ayadi.ad.viewed.${taskId}`;
+    if (window.sessionStorage.getItem(key)) return;
+    window.sessionStorage.setItem(key, "1");
+    void maybeShowAd("interstitial");
+  }, [taskId, maybeShowAd]);
 
   if (!task) return null; // satisfied by loader notFound, but keeps TS happy
 
@@ -134,6 +145,8 @@ function TaskDetail() {
   const createBid = useMutation({
   mutationFn: async () => {
     if (!session) throw new Error(t("task.loginToBid"));
+    // Show an interstitial ad before submitting a new bid.
+    await maybeShowAd("interstitial");
     let imageUrl: string | undefined;
     if (bidImage) {
       setUploadingBidImage(true);

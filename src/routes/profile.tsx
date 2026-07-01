@@ -11,6 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TaskCard } from "@/components/common/TaskCard";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { AyadiMiner } from "@/components/common/AyadiMiner";
+import { AdFreeCard } from "@/components/common/AdFreeCard";
+import { BoostTaskButton } from "@/components/common/BoostTaskButton";
 import { usePiAuth } from "@/components/providers/PiAuthProvider";
 import { supabase } from "@/lib/supabaseClientNew";
 import { compressImage } from "@/lib/image-compress";
@@ -210,6 +212,11 @@ function ProfilePage() {
           <AyadiMiner />
         </div>
 
+        {/* Ad-Free subscription */}
+        <div className="mt-6">
+          <AdFreeCard />
+        </div>
+
         {/* Tabs */}
         <Tabs defaultValue="tasks" className="mt-8">
           <TabsList className="glass-card grid w-full grid-cols-3 rounded-full p-1">
@@ -234,7 +241,10 @@ function ProfilePage() {
             ) : (
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {myTasks.map((task, i) => (
-                  <TaskCard key={task.id} task={task} index={i} />
+                  <div key={task.id} className="flex flex-col gap-2">
+                    <TaskCard task={task} index={i} />
+                    <BoostTaskButton task={task} />
+                  </div>
                 ))}
               </div>
             )}
